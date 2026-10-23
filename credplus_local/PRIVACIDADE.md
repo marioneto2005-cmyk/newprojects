@@ -1,0 +1,5 @@
+# Dados locais
+
+Não há telemetria, API externa, upload, integração com AD ou envio de documentos. O PDF de origem é aberto somente para leitura. Imagens de páginas para OCR ficam na pasta temporária do usuário e são removidas ao concluir ou ocorrer erro normalmente. Encerramento forçado/falha do sistema pode deixar resíduos `credplus-*` no temporário; a TI pode definir limpeza segundo sua política. Exclusão comum não é apagamento forense.
+
+Os campos ficam em memória até a troca/limpeza do formulário ou encerramento. PDF e XLSX gerados permanecem no destino escolhido e contêm dados pessoais. Aplicam-se controle de acesso, retenção e compartilhamento da empresa. O aplicativo não oferece criptografia própria nem gestão de consentimento. Evite pastas sincronizadas externamente se não forem autorizadas. Não inclua PDFs reais em repositórios de código ou logs de suporte. O processamento OCR usa subprocesso sem shell e sem enviar valores na linha de comando; as imagens temporárias são entradas locais.
