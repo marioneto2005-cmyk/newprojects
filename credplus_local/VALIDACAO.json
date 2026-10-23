@@ -1,8 +1,8 @@
 {
-  "versao": "26.10.23.1",
+  "versao": "26.10.23.2",
   "plataforma_validacao": "Linux x64, Python 3.12.14, Tkinter com Xvfb",
   "testes": {
-    "executados": 62,
+    "executados": 64,
     "falhas": 0,
     "erros": 0,
     "pulados": 0
@@ -148,5 +148,12 @@
       "altura_pontos": 1422,
       "campos_vazios_omitidos": true
     }
-  ]
+  ],
+  "correcao_edicao": {
+    "salvamento_sem_janela_ativa_testado": true,
+    "perda_de_foco_testada": true,
+    "enter_normal_e_numerico_mapeados": true,
+    "testes_desativados": false,
+    "nova_validacao_windows_pendente": true
+  }
 }

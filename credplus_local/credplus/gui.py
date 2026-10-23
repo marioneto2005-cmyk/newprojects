@@ -206,7 +206,11 @@ class App(tk.Tk):
                 editor.destroy();self._refresh_tables();self._dirty()
             except (ValueError,KeyError) as e:messagebox.showerror('Formato inválido',str(e));editor.focus_set()
             finally:saving['active']=False
-        editor.bind('<Return>',save);editor.bind('<FocusOut>',save);editor.bind('<Escape>',lambda e:editor.destroy())
+        # Keyboard events need OS focus; virtual commits also support deterministic UI automation.
+        # Return and numpad Enter use the same real save/validation handler.
+        editor.event_add('<<CommitCellEdit>>','<Return>','<KP_Enter>')
+        editor.bind('<<CommitCellEdit>>',save)
+        editor.bind('<FocusOut>',save);editor.bind('<Escape>',lambda e:editor.destroy())
     def _add_offer(self):
         name=simpledialog.askstring('Adicionar opção','Nome da opção:',parent=self)
         if name:

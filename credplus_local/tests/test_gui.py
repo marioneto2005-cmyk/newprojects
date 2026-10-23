@@ -63,15 +63,33 @@ class DesktopTests(unittest.TestCase):
   a=self.populated();a.tabs.select(a.offer_tab);a.update()
   x,y,w,h=a.offer_tree.bbox('dm','#2');a._edit_cell(a.offer_tree,SimpleNamespace(x=x+5,y=y+h//2),'offer');a.update()
   editor=next(c for c in a.offer_tree.winfo_children() if c.winfo_class()=='TEntry')
-  editor.delete(0,'end');editor.insert(0,'250.000,00');editor.event_generate('<Return>');a.update()
+  editor.delete(0,'end');editor.insert(0,'250.000,00');editor.event_generate('<<CommitCellEdit>>');a.update()
   self.assertEqual(a.proposal.offers[0].values['dm'],'250.000,00')
  def test_payment_inline_edit_saves_without_confirmation(self):
   from types import SimpleNamespace
   a=self.populated();a.tabs.select(a.payment_tab);a.update()
   x,y,w,h=a.payment_tree.bbox('0','#4');a._edit_cell(a.payment_tree,SimpleNamespace(x=x+5,y=y+h//2),'payment');a.update()
   editor=next(c for c in a.payment_tree.winfo_children() if c.winfo_class()=='TEntry')
-  editor.delete(0,'end');editor.insert(0,'210,00');editor.event_generate('<Return>');a.update()
+  editor.delete(0,'end');editor.insert(0,'210,00');editor.event_generate('<<CommitCellEdit>>');a.update()
   self.assertEqual(a.proposal.payments[0].amount,'210,00')
+ def test_edit_commit_does_not_depend_on_active_os_window(self):
+  from types import SimpleNamespace
+  a=self.populated();a.tabs.select(a.offer_tab);a.update()
+  x,y,w,h=a.offer_tree.bbox('dm','#2');a.withdraw()
+  a._edit_cell(a.offer_tree,SimpleNamespace(x=x+5,y=y+h//2),'offer');a.update()
+  editor=next(c for c in a.offer_tree.winfo_children() if c.winfo_class()=='TEntry')
+  self.assertNotEqual(a.focus_get(),editor)
+  keys=editor.event_info('<<CommitCellEdit>>')
+  self.assertTrue(any('Return' in key for key in keys));self.assertTrue(any('KP_Enter' in key for key in keys))
+  editor.delete(0,'end');editor.insert(0,'350.000,00');editor.event_generate('<<CommitCellEdit>>');a.update()
+  self.assertEqual(a.proposal.offers[0].values['dm'],'350.000,00');self.assertFalse(editor.winfo_exists())
+ def test_edit_commit_on_focus_out(self):
+  from types import SimpleNamespace
+  a=self.populated();a.tabs.select(a.payment_tab);a.update()
+  x,y,w,h=a.payment_tree.bbox('0','#4');a._edit_cell(a.payment_tree,SimpleNamespace(x=x+5,y=y+h//2),'payment');a.update()
+  editor=next(c for c in a.payment_tree.winfo_children() if c.winfo_class()=='TEntry')
+  editor.delete(0,'end');editor.insert(0,'220,00');editor.event_generate('<FocusOut>');a.update()
+  self.assertEqual(a.proposal.payments[0].amount,'220,00');self.assertFalse(editor.winfo_exists())
  def test_original_pdf_is_never_overwritten(self):
   a=self.populated();source=Path(self.tmp.name)/'original.pdf';source.write_bytes(b'original');a.file=source
   with patch('credplus.gui.filedialog.asksaveasfilename',return_value=str(source)),patch('credplus.gui.messagebox.showerror') as error:a._export('pdf');self.assertTrue(error.called)

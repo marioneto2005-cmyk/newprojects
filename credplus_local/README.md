@@ -1,4 +1,4 @@
-# Proposta Seguro Auto - Segurado v26.10.23.1
+# Proposta Seguro Auto - Segurado v26.10.23.2
 
 Aplicativo desktop para transformar um PDF de seguro em uma proposta visual, com opções de cobertura e planos de pagamento. Processamento inteiramente local; não usa serviços externos, conta Microsoft ou integração com AD. O código e o empacotador estão neste pacote. O novo executável deve ser construído em Windows.
 
@@ -35,7 +35,7 @@ O script instala as dependências na máquina de construção, executa os testes
 
 ```text
 dist\PropostaSeguroAuto\PropostaSeguroAuto.exe
-dist\PropostaSeguroAuto-26.10.23.1-Windows.zip
+dist\PropostaSeguroAuto-26.10.23.2-Windows.zip
 ```
 
 Distribua **a pasta completa ou o ZIP**, incluindo `_internal`; não copie somente o executável. O executável anterior não se atualiza automaticamente. Construa em uma nova pasta e feche a versão antiga antes de trocar o pacote. A marca salva é reaproveitada no perfil do usuário.
@@ -55,3 +55,7 @@ Requer Tkinter para a interface. Para OCR, instale Tesseract com português/ingl
 A marca é armazenada em `%LOCALAPPDATA%\PropostaSeguroAuto\logo.png` no Windows. Para testes/ambientes especiais, `PROPOSTA_SETTINGS_DIR` substitui essa pasta. Nenhum projeto ou dado de cliente é salvo automaticamente nessa configuração.
 
 Veja `exemplos/Proposta_Exemplo.pdf`, `exemplos/Proposta_Exemplo.png`, `exemplos/Tela_Interface.png` e `RELATORIO.md`. Os exemplos usam dados pessoais fictícios e valores comerciais de demonstração.
+
+## Correção 26.10.23.2
+
+A construção 26.10.23.1 relatada no Windows parou em dois testes de edição porque simulavam uma tecla Enter que depende do foco da janela. A edição agora usa um evento de salvamento compartilhado por Enter, Enter do teclado numérico e a automação gráfica, mantendo o salvamento ao sair do campo. Os testes de interface acionam esse evento sem depender da janela ativa. Dois testes adicionais cobrem a edição sem foco e o salvamento na perda de foco. Nenhum teste foi desativado, e o empacotador continua interrompendo a construção se houver falhas. A suite de 64 testes passou no Linux com Xvfb; a nova construção deve ser executada no Windows.
