@@ -180,5 +180,16 @@
       "campos_padrao": 44,
       "campos_complementares_manuais": 5
     }
-  ]
+  ],
+  "atualizacao_pdf_v02": {
+    "testes_executados": 32,
+    "falhas": 0,
+    "erros": 0,
+    "pulados": 0,
+    "interface": "Linux com Xvfb",
+    "exemplo_paginas": 1,
+    "preserva_todos_campos_revisados": true,
+    "complemento_para_textos_extensos": true,
+    "novo_executavel_windows_compilado_neste_ambiente": false
+  }
 }

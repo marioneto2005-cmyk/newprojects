@@ -1,4 +1,4 @@
-# Credplus Local — versão 0.1, protótipo para homologação
+# Credplus Local — versão 0.2, protótipo para homologação
 
 Aplicação desktop em português para preparar um resumo de seguro no padrão Sicoob do Excel fornecido. Não usa serviços externos, Excel/Office instalado, macros, conta Microsoft ou credenciais do AD. **O executável Windows ainda precisa ser construído e homologado no Windows.** O desenvolvimento e os testes de extração/exportação foram executados no Linux.
 
@@ -15,7 +15,7 @@ O documento contém dados pessoais, perfil, veículo, coberturas, franquias e pa
 
 ## Modelos e limitações
 
-O PDF é um resumo com a mesma organização visual do modelo, distribuído em páginas conforme o conteúdo, com identidade Sicoob. O Excel mantém a primeira aba do modelo fornecido e cria `Complemento` para campos longos e campos sem espaço no original (vigência, tipo de franquia e APP conjunta). A segunda aba original, com outro cliente, foi removida. Dados e contatos de exemplo foram apagados. A etiqueta de prêmio foi corrigida para **prêmio total da opção selecionada**: não se presume desconto à vista nem parcelamento sem juros. Condições de pagamento são de preenchimento manual nesta versão. Há também cinco campos de complementos revisados para dados comerciais adicionais de segurado/condutor, perfil, veículo, coberturas e franquias fora dos espaços do modelo. Preencha esses complementos manualmente, sem copiar identificadores excluídos ou textos da seguradora; complementos vazios são omitidos do PDF.
+O PDF usa uma ficha compacta A4, com quatro colunas, campos lado a lado e as sete seções do Excel fornecido, mantendo a identidade Sicoob. O exemplo padrão cabe em uma página, sem depender do Excel instalado. Textos que excedem duas linhas na célula e complementos preenchidos seguem em páginas adicionais com referências na primeira página; nenhum valor revisado é cortado. Campos não informados usam uma indicação curta e uma explicação única no rodapé da ficha. O Excel mantém a primeira aba do modelo fornecido e cria `Complemento` para campos longos e campos sem espaço no original (vigência, tipo de franquia e APP conjunta). A segunda aba original, com outro cliente, foi removida. Dados e contatos de exemplo foram apagados. A etiqueta de prêmio foi corrigida para **prêmio total da opção selecionada**: não se presume desconto à vista nem parcelamento sem juros. Condições de pagamento são de preenchimento manual nesta versão. Há também cinco campos de complementos revisados para dados comerciais adicionais de segurado/condutor, perfil, veículo, coberturas e franquias fora dos espaços do modelo. Preencha esses complementos manualmente, sem copiar identificadores excluídos ou textos da seguradora; complementos vazios são omitidos do PDF.
 
 Os PDFs escaneados podem perder ou trocar dígitos/colunas apesar de parecerem corretos. Todo valor extraído é um **candidato**, não confirmação automática. As regras atuais cobrem campos do modelo e não garantem extrair toda informação comercial de todo layout. Tabelas com múltiplos produtos, coberturas adicionais e textos fora desses campos exigem conferência no original. Uma proposta de layout desconhecido pode exigir preenchimento manual. Nenhum resultado de OCR tem garantia de exatidão. Não há IA de nuvem. PDFs protegidos precisam de cópia autorizada sem senha. Limite de 60 páginas; OCR pode levar alguns minutos.
 
@@ -52,3 +52,9 @@ python run_app.py
 ```
 
 Requer Tkinter para a interface e Tesseract com português/inglês para PDFs escaneados. Opcionalmente configure `CREDPLUS_TESSERACT` com o caminho do executável e `CREDPLUS_TESSDATA` com a pasta dos idiomas. Sem OCR, o preenchimento manual permanece disponível. Dependências declaradas são apenas bibliotecas locais; a aplicação não usa rede. Os PDFs de clientes não estão incluídos neste código ou no pacote de distribuição. Os exemplos de saída usam dados fictícios.
+
+## Atualizar da versão 0.1 para a 0.2
+
+Feche o aplicativo e extraia o novo código em outra pasta. Na máquina Windows usada para construir, execute novamente `build_windows.ps1` com o mesmo diretório Tesseract autorizado. A versão nova só entra no programa depois da reconstrução: o executável anterior não muda automaticamente. Distribua a nova pasta completa `dist/CredplusLocal`, ou seu ZIP, para as estações de uso. Elas não precisam de Python, pip, Office ou instalação separada de Tesseract: esses componentes necessários ao processamento já acompanham o pacote gerado. A máquina de construção continua precisando de Python 3.12 e da distribuição OCR fornecida à construção. Preserve os documentos e o pacote anterior até conferir a atualização.
+
+O PDF demonstrativo está em `exemplos/Exemplo_PDF_Compacto.pdf` e usa somente dados fictícios.

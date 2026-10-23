@@ -93,6 +93,38 @@ class ExportTests(unittest.TestCase):
  def test_long_content_paginates(self):
   p=self.root/'longo.pdf';export_pdf(p,{**BASE,'garagem':'Texto para conferência. '*45})
   with fitz.open(p) as d:self.assertGreaterEqual(len(d),2)
+ def test_compact_standard_fits_one_a4_page(self):
+  data={**BASE,'condutor':'CONDUTOR EXEMPLO','uso':'Particular','casco':'100% FIPE','dm':'200.000,00','dc':'200.000,00','appm':'10.000,00','appi':'10.000,00','appg':'20.000,00','franquia':'3.000,00','tipofranquia':'Reduzida 50%','pagamento_cartao':'10 parcelas sem juros'}
+  p=self.root/'compacto.pdf';export_pdf(p,data)
+  with fitz.open(p) as d:
+   self.assertEqual(len(d),1);self.assertAlmostEqual(d[0].rect.width,595.28,places=1)
+   text=d[0].get_text()
+   for section in ['1. DADOS DO SEGURADO','2. PERFIL DE RISCO','3. DADOS DO VEÍCULO','4. COBERTURAS','5. FRANQUIAS','6. VALOR','7. COMO CONTRATAR']:self.assertIn(section,text)
+   self.assertIn('20.000,00',text)
+ def test_compact_preserves_every_reviewed_field(self):
+  from credplus.core import validate_values
+  data={}
+  ids={'cpf':'52998224725','cpfcond':'52998224725','cep':'12345678','placa':'ABC1D23','chassi':'1HGCM82633A004352'}
+  for i,f in enumerate(FIELDS):
+   data[f.key]=(f'{100+i},00' if f.kind=='money' else '23/10/2026' if f.kind=='date' else ids[f.key] if f.kind=='id' else 'valor_'+f.key)
+  p=self.root/'todos.pdf';export_pdf(p,data)
+  with fitz.open(p) as d:
+   text=''.join(''.join(page.get_text().split()) for page in d)
+   for key,value in validate_values(data).items():self.assertIn(''.join(value.split()),text,key)
+   for page in d:
+    for block in page.get_text('dict')['blocks']:
+     for line in block.get('lines',[]):
+      for span in line['spans']:
+       self.assertGreaterEqual(span['size'],7)
+       self.assertGreaterEqual(span['bbox'][0],25)
+       self.assertLessEqual(span['bbox'][2],page.rect.width-25)
+ def test_compact_overflow_has_reference_and_full_text(self):
+  text='Detalhe conferido. '*60+'FINAL_DO_TEXTO'
+  p=self.root/'complemento.pdf';export_pdf(p,{**BASE,'garagem':text})
+  with fitz.open(p) as d:
+   self.assertGreaterEqual(len(d),2);self.assertIn('Ver complemento [1]',d[0].get_text())
+   continuation=''.join(''.join(page.get_text().split()) for page in list(d)[1:])
+   self.assertIn(''.join(text.split()),continuation)
  def test_failed_write_preserves_existing(self):
   p=self.root/'original.pdf';p.write_bytes(b'original')
   with self.assertRaises(ValueError):export_pdf(p,{})

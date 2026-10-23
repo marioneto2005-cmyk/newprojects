@@ -1,8 +1,12 @@
-# Entrega 0.1 — Credplus Local
+# Entrega 0.2 — Credplus Local
 
 Primeiro protótipo funcional para homologação, desenvolvido em Python. Entrega código-fonte, modelo limpo, regras de leitura, interface desktop, testes e script de empacotamento Windows. **Não inclui um executável Windows já compilado.**
 
-## O que foi executado
+## Atualização 0.2 — impressão compacta
+
+PDF redesenhado como uma ficha A4 de quatro colunas, com as sete seções do Excel. O exemplo fictício e o cenário padrão com APP conjunta cabem em uma página. Valores longos e complementos seguem em páginas adicionais com referências, preservando todos os campos revisados. Foram executados 32 testes sem falhas ou pulos no Linux com Xvfb, incluindo o fluxo da interface até a geração de PDF e Excel. Os novos testes verificam uma página A4 no caso padrão, preservação de todos os valores, referências de complemento, fonte mínima de 7 pontos e limites horizontais da página. O exemplo foi renderizado e inspecionado visualmente. Não foi compilado um novo executável Windows neste ambiente; a atualização precisa de reconstrução na máquina Windows usada pelo usuário.
+
+## Histórico: validação inicial de extração na versão 0.1
 
 As cinco propostas anexadas foram abertas e processadas localmente. HDI possui texto; as outras quatro exigiram OCR local português/inglês. Resultados da primeira opção:
 
