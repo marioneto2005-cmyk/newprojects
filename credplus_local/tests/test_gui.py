@@ -1,43 +1,78 @@
-"""Run with a desktop display, or a local Xvfb display in Linux CI."""
+"""Desktop interaction tests; automatic generation, with no review gate."""
 import os,tempfile,unittest
 from pathlib import Path
 from unittest.mock import patch
-from credplus.core import FIELDS
+from PIL import Image
+from credplus import APP_NAME
+from credplus.proposal import Proposal,Offer,Payment,CORRETORAS
 
 @unittest.skipUnless(os.name=='nt' or os.environ.get('DISPLAY'),'Requer tela gráfica')
 class DesktopTests(unittest.TestCase):
  def setUp(self):
+  self.tmp=tempfile.TemporaryDirectory();self.env=patch.dict(os.environ,{'PROPOSTA_SETTINGS_DIR':str(Path(self.tmp.name)/'settings')});self.env.start()
   from credplus.gui import App
   self.app=App();self.app.update()
- def tearDown(self):self.app.destroy()
- def test_confirm_then_edit_invalidates(self):
-  a=self.app;a.tree.selection_set('nome');a.update();a.editor.insert('1.0','Cliente Exemplo');a.update();a._save_field();a.update()
-  self.assertIn('nome',a.reviewed)
-  a.tree.selection_set('nome');a.update();self.assertIn('nome',a.reviewed)
-  a.editor.insert('end',' editado');a.update();self.assertNotIn('nome',a.reviewed)
- def test_switch_source_can_cancel_without_losing_values(self):
-  a=self.app;a.values['nome']='Cliente Exemplo';a.insurer.set('HDI')
-  with patch('credplus.gui.messagebox.askyesno',return_value=False):a._insurer_changed()
-  self.assertEqual(a.insurer.get(),'Zurich');self.assertEqual(a.values['nome'],'Cliente Exemplo')
-  a.insurer.set('Allianz')
-  with patch('credplus.gui.messagebox.askyesno',return_value=True):a._insurer_changed()
-  self.assertEqual(len(a.offerbox['values']),5);self.assertFalse(any(a.values.values()))
- def test_reset_clears_previous_source_evidence(self):
-  a=self.app;a.candidates={'nome':{'evidence':'DADO DO CLIENTE ANTERIOR'}};a.values['nome']='Cliente anterior'
-  a.tree.selection_set('nome');a.update();self.assertIn('ANTERIOR',a.evidence.get('1.0','end'))
-  a._reset();a.update();self.assertEqual(a.evidence.get('1.0','end').strip(),'');self.assertIsNone(a.current);self.assertFalse(a.tree.selection())
- def test_export_blocked_before_review(self):
+ def tearDown(self):self.app.destroy();self.env.stop();self.tmp.cleanup()
+ def populated(self):
+  a=self.app;a.proposal=Proposal('HDI',{'nome':'CLIENTE EXEMPLO','modelo':'VEÍCULO EXEMPLO'},[Offer('Auto',{'total':'2.000,00','dm':'200.000,00'})],[Payment('Auto','Cartão',10,'200,00')]);a._populate();a.update();return a
+ def test_name_and_removed_controls(self):
+  a=self.app;self.assertEqual(a.title(),APP_NAME);self.assertFalse(hasattr(a,'confirm'));self.assertFalse(hasattr(a,'reviewed'));self.assertFalse(hasattr(a,'xlsxbutton'));self.assertFalse(hasattr(a,'offerbox'));self.assertFalse(hasattr(a,'insbox'))
+  def walk(w):
+   for c in w.winfo_children():yield c;yield from walk(c)
+  self.assertFalse(any(w.winfo_class()=='TCheckbutton' for w in walk(a)))
+ def test_import_asks_company_then_starts_automatically(self):
+  a=self.app;new=Path(self.tmp.name)/'nova.pdf'
+  with patch('credplus.gui.filedialog.askopenfilename',return_value=str(new)),patch.object(a,'_choose_company',return_value='Mapfre') as choose,patch.object(a,'_import') as read:
+   a._select();choose.assert_called_once_with(new);read.assert_called_once()
+  self.assertEqual(a.proposal.corretora,'Mapfre');self.assertEqual(a.file,new)
+ def test_cancel_popup_preserves_previous_document(self):
+  a=self.populated();before=a.proposal
+  with patch('credplus.gui.filedialog.askopenfilename',return_value='new.pdf'),patch.object(a,'_choose_company',return_value=None):a._select()
+  self.assertIs(a.proposal,before)
+ def test_pdf_and_png_export_without_confirmation(self):
+  a=self.populated()
+  for kind in ['pdf','png']:
+   dest=Path(self.tmp.name)/('saida.'+kind)
+   with patch('credplus.gui.filedialog.asksaveasfilename',return_value=str(dest)),patch('credplus.gui.messagebox.showinfo'),patch('credplus.gui.messagebox.showerror') as errors:
+    a._export(kind);self.assertFalse(errors.called);self.assertTrue(dest.is_file())
+ def test_edit_client_value_is_immediate(self):
+  a=self.populated();a.client_vars['nome'].set('CLIENTE ALTERADO');a.update();self.assertEqual(a._collect().values['nome'],'CLIENTE ALTERADO')
+ def test_new_document_clears_previous_fields_and_payments(self):
+  a=self.populated();a.proposal=Proposal('Azul');a._populate();a.update();self.assertEqual(a.client_vars['nome'].get(),'');self.assertFalse(a.payment_tree.get_children());self.assertFalse(a.offer_tree.get_children())
+ def test_preview_uses_generated_page(self):
+  a=self.populated();a._preview();self.assertIsNotNone(a.preview_image);self.assertFalse(a.preview_dirty)
+ def test_logo_persists_in_another_application_instance(self):
+  a=self.app;source=Path(self.tmp.name)/'marca.png';Image.new('RGB',(200,80),'green').save(source)
+  with patch('credplus.gui.filedialog.askopenfilename',return_value=str(source)):a._choose_logo()
+  self.assertTrue(a.logo.is_file());source.unlink();a.destroy()
+  from credplus.gui import App
+  self.app=App();self.app.update();self.assertTrue(self.app.logo.is_file());self.assertIsNotNone(self.app.logo_image)
+ def test_popup_lists_all_eight_and_no_option_choice(self):
   a=self.app
-  with patch('credplus.gui.filedialog.asksaveasfilename') as save,patch('credplus.gui.messagebox.showinfo') as info:
-   a._export('pdf');self.assertTrue(info.called);self.assertFalse(save.called)
- def test_review_all_then_export_through_ui(self):
-  a=self.app
-  a.values.update(nome='CLIENTE EXEMPLO',modelo='VEÍCULO EXEMPLO',total='2.000,00')
-  for f in FIELDS:
-   a.tree.selection_set(f.key);a.update();a._save_field();a.update()
-  self.assertEqual(len(a.reviewed),len(FIELDS));a.confirm.set(True)
-  with tempfile.TemporaryDirectory() as tmp:
-   for ext in ['pdf','xlsx']:
-    dest=Path(tmp)/('resultado.'+ext)
-    with patch('credplus.gui.filedialog.asksaveasfilename',return_value=str(dest)),patch('credplus.gui.messagebox.showinfo'),patch('credplus.gui.messagebox.showerror') as error:
-     a._export(ext);self.assertFalse(error.called);self.assertTrue(dest.is_file())
+  def select():
+   for popup in a.winfo_children():
+    if popup.winfo_class()=='Toplevel':
+     def walk(w):
+      for c in w.winfo_children():yield c;yield from walk(c)
+     radios=[w for w in walk(popup) if w.winfo_class()=='TRadiobutton'];self.assertEqual({w.cget('text') for w in radios},set(CORRETORAS));radios[0].invoke()
+     for w in walk(popup):
+      if w.winfo_class()=='TButton':w.invoke();return
+  a.after(100,select);self.assertEqual(a._choose_company(Path('arquivo.pdf')),CORRETORAS[0])
+ def test_offer_inline_edit_saves_without_confirmation(self):
+  from types import SimpleNamespace
+  a=self.populated();a.tabs.select(a.offer_tab);a.update()
+  x,y,w,h=a.offer_tree.bbox('dm','#2');a._edit_cell(a.offer_tree,SimpleNamespace(x=x+5,y=y+h//2),'offer');a.update()
+  editor=next(c for c in a.offer_tree.winfo_children() if c.winfo_class()=='TEntry')
+  editor.delete(0,'end');editor.insert(0,'250.000,00');editor.event_generate('<Return>');a.update()
+  self.assertEqual(a.proposal.offers[0].values['dm'],'250.000,00')
+ def test_payment_inline_edit_saves_without_confirmation(self):
+  from types import SimpleNamespace
+  a=self.populated();a.tabs.select(a.payment_tab);a.update()
+  x,y,w,h=a.payment_tree.bbox('0','#4');a._edit_cell(a.payment_tree,SimpleNamespace(x=x+5,y=y+h//2),'payment');a.update()
+  editor=next(c for c in a.payment_tree.winfo_children() if c.winfo_class()=='TEntry')
+  editor.delete(0,'end');editor.insert(0,'210,00');editor.event_generate('<Return>');a.update()
+  self.assertEqual(a.proposal.payments[0].amount,'210,00')
+ def test_original_pdf_is_never_overwritten(self):
+  a=self.populated();source=Path(self.tmp.name)/'original.pdf';source.write_bytes(b'original');a.file=source
+  with patch('credplus.gui.filedialog.asksaveasfilename',return_value=str(source)),patch('credplus.gui.messagebox.showerror') as error:a._export('pdf');self.assertTrue(error.called)
+  self.assertEqual(source.read_bytes(),b'original')

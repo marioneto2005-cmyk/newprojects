@@ -1,60 +1,57 @@
-# Credplus Local — versão 0.2, protótipo para homologação
+# Proposta Seguro Auto - Segurado v26.10.23.1
 
-Aplicação desktop em português para preparar um resumo de seguro no padrão Sicoob do Excel fornecido. Não usa serviços externos, Excel/Office instalado, macros, conta Microsoft ou credenciais do AD. **O executável Windows ainda precisa ser construído e homologado no Windows.** O desenvolvimento e os testes de extração/exportação foram executados no Linux.
+Aplicativo desktop para transformar um PDF de seguro em uma proposta visual, com opções de cobertura e planos de pagamento. Processamento inteiramente local; não usa serviços externos, conta Microsoft ou integração com AD. O código e o empacotador estão neste pacote. O novo executável deve ser construído em Windows.
 
-## Operação
+## Usar o programa
 
-1. Abra `CredplusLocal.exe` na pasta distribuída pela TI (mantenha toda a pasta `_internal`). Não exige instalação de Python na estação do usuário.
-2. Selecione **uma proposta PDF por vez**. Escolha a seguradora de origem (uso interno) e a opção exata conforme a ordem no PDF. As opções não são uma comparação entre seguradoras. Não misture dados de clientes.
-3. Clique **Ler proposta**. PDF com texto é extraído localmente; PDF escaneado usa OCR Tesseract português/inglês local. Aguarde as páginas. O programa não baixa OCR ou outros componentes em tempo de uso.
-4. Abra o PDF original ao lado. Selecione cada campo, corrija o valor e clique **Confirmar valor / ausência**. Compare todos, inclusive CPF, chassi, datas, valores e colunas de coberturas. Use valores como `1.234,56` e datas `DD/MM/AAAA`. Não troque automaticamente O por 0 ou I por 1. Os campos sem leitura podem ser preenchidos manualmente. Branco significa **não informado**, e não ausência de cobertura. Não transforme APP conjunta em morte e invalidez sem evidência.
-5. Preencha nome do consultor e WhatsApp se desejar; ambos começam em branco a cada abertura. Campos não localizados também devem ter sua ausência confirmada.
-6. Marque a conferência final e gere PDF ou Excel. Nome do proponente, modelo e prêmio total são obrigatórios. Confira o arquivo gerado antes de enviar. O programa não envia mensagens ou documentos.
+1. Abra `PropostaSeguroAuto.exe` na pasta completa distribuída. Não é necessário instalar Python, Office ou Tesseract nas estações finais: os componentes são incluídos na construção.
+2. Clique **Importar proposta PDF**. Logo após escolher o arquivo, abre a janela **Corretora** com Aliro, Allianz, Azul, HDI, Mapfre, Tokio Marine, Yelum e Zurich. Escolha a correspondente; a leitura começa automaticamente. O arquivo `ALRIO.pdf` foi identificado pelo conteúdo como Aliro.
+3. Os dados aparecem em **Cliente e veículo**, **Opções e coberturas** e **Formas de pagamento**. Todas as opções identificadas são importadas; não há seletor de opção na tela principal. Os valores podem ser editados diretamente, sem confirmação individual. Nas tabelas, use duplo clique no valor. Também é possível adicionar opções e pagamentos manualmente.
+4. No canto superior direito, clique **Alterar logomarca** e escolha PNG, JPEG ou WebP. A imagem é normalizada e salva no perfil do usuário; permanece após fechar o programa e trocar de pasta/versão. A imagem original não precisa permanecer no local. O botão **Remover** apaga a marca salva. Não há logomarca de cliente embutida no aplicativo; a marca dos exemplos é fictícia.
+5. Informe consultor e WhatsApp se desejar. Esses dados começam vazios; não são persistidos com a logomarca.
+6. Abra **Prévia do documento** ou clique diretamente em **Gerar PDF** / **Gerar PNG**. Não há checkbox de conferência ou confirmação obrigatória de campos. Campos vazios e marcadores “Não informado” não aparecem no documento do cliente. A exportação em Excel foi removida da interface.
 
-O documento contém dados pessoais, perfil, veículo, coberturas, franquias e pagamento revisados. Uma lista explícita de campos impede copiar número de cotação, número de apólice, CNPJ/endereço da seguradora e textos jurídicos integrais. A origem é usada somente para a extração e não é identificada no resumo. A identidade Sicoob é mantida. Não cole dados excluídos em campos manuais.
+Nome de corretora/seguradora pode aparecer na proposta. Número de cotação, número de apólice, dados bancários e seções jurídicas integrais não são copiados para a saída. O programa não envia arquivos ou mensagens. A identificação do fornecedor é utilizada conforme escolhido na janela Corretora.
 
-## Modelos e limitações
+## Documento em página única
 
-O PDF usa uma ficha compacta A4, com quatro colunas, campos lado a lado e as sete seções do Excel fornecido, mantendo a identidade Sicoob. O exemplo padrão cabe em uma página, sem depender do Excel instalado. Textos que excedem duas linhas na célula e complementos preenchidos seguem em páginas adicionais com referências na primeira página; nenhum valor revisado é cortado. Campos não informados usam uma indicação curta e uma explicação única no rodapé da ficha. O Excel mantém a primeira aba do modelo fornecido e cria `Complemento` para campos longos e campos sem espaço no original (vigência, tipo de franquia e APP conjunta). A segunda aba original, com outro cliente, foi removida. Dados e contatos de exemplo foram apagados. A etiqueta de prêmio foi corrigida para **prêmio total da opção selecionada**: não se presume desconto à vista nem parcelamento sem juros. Condições de pagamento são de preenchimento manual nesta versão. Há também cinco campos de complementos revisados para dados comerciais adicionais de segurado/condutor, perfil, veículo, coberturas e franquias fora dos espaços do modelo. Preencha esses complementos manualmente, sem copiar identificadores excluídos ou textos da seguradora; complementos vazios são omitidos do PDF.
+PDF e PNG usam o mesmo desenho, com identidade visual configurável, blocos de cliente/veículo, comparação das coberturas, franquias e tabelas de pagamento. A fonte não é reduzida para espremer tudo em A4. A largura do PDF equivale à A4; **a altura é adaptada ao conteúdo**, mantendo uma página digital única. Propostas com seis opções e muitas formas de pagamento ficam mais longas. Na impressão em uma folha A4, a função “ajustar à página” do leitor reduzirá o conteúdo; o PNG é adequado para envio digital. A imagem é gerada a 150 dpi da própria página PDF.
 
-Os PDFs escaneados podem perder ou trocar dígitos/colunas apesar de parecerem corretos. Todo valor extraído é um **candidato**, não confirmação automática. As regras atuais cobrem campos do modelo e não garantem extrair toda informação comercial de todo layout. Tabelas com múltiplos produtos, coberturas adicionais e textos fora desses campos exigem conferência no original. Uma proposta de layout desconhecido pode exigir preenchimento manual. Nenhum resultado de OCR tem garantia de exatidão. Não há IA de nuvem. PDFs protegidos precisam de cópia autorizada sem senha. Limite de 60 páginas; OCR pode levar alguns minutos.
+Todas as linhas de parcelamento reconhecidas são preservadas, incluindo os planos intermediários, juros, entrada e totais quando expressos no documento. O número de parcelas inclui a entrada quando indicada. Um cronograma com primeira/última parcelas diferentes é apresentado com esses valores. Totais de parcelas não são inventados pela multiplicação de valores arredondados. Diferenças entre tabela de coberturas e tabela de pagamento são mantidas com nota explicativa.
 
-## Construção para Windows — TI
+Os oito layouts anexados foram exercitados de ponta a ponta. Isso não garante leitura universal: novos modelos, versões de PDF ou OCR podem omitir campos e linhas não reconhecidos. Ausência de um campo não significa cobertura não contratada. Não há etapa de revisão obrigatória; a edição é opcional. Dados cuja leitura é ambígua continuam sem valor automático, e não são substituídos por estimativas. PDFs protegidos precisam de cópia autorizada sem senha. Limite de 60 páginas por documento.
 
-A máquina de construção precisa de Windows x64, Python 3.12 x64 e acesso autorizado ao PyPI. As estações finais não precisam desses acessos. Não execute em modo administrador nem altere ExecutionPolicy, AppLocker, WDAC, Defender ou regras do AD para contornar bloqueios. A TI deve usar seu processo autorizado de execução de scripts, assinatura e distribuição.
+## Construir o executável no Windows
 
-Forneça uma distribuição Windows completa e aprovada de Tesseract 5, com `tesseract.exe`, DLLs, `tessdata/por.traineddata`, `tessdata/eng.traineddata` e licenças. O script não baixa executáveis OCR. O OCR de Linux foi testado com Tesseract 5.3.0; valide a distribuição Windows escolhida. Exemplo de construção, em PowerShell com política já autorizada:
+Use uma máquina Windows x64 com Python 3.12 x64, Tcl/Tk, pip e acesso autorizado aos pacotes Python. Forneça um diretório Tesseract 5 completo, com executável, DLLs, licenças e `tessdata/por.traineddata` e `tessdata/eng.traineddata`. O script não baixa executáveis OCR.
+
+Abra o PowerShell na pasta extraída e execute:
 
 ```powershell
-.\build_windows.ps1 -TesseractDir 'C:\FerramentasAprovadas\Tesseract-OCR'
+.\build_windows.ps1 -TesseractDir 'C:\Program Files\Tesseract-OCR'
 ```
 
-Saída: `dist/CredplusLocal-Windows.zip`. Extraia a pasta completa. A TI deve revisar as licenças antes de distribuir, decidir assinatura e permitir o hash/certificado conforme suas políticas. O programa usa um processo filho Tesseract e a pasta temporária do usuário; essas capacidades também precisam estar permitidas. Não existe garantia de execução em um domínio AD sem testar suas políticas.
+O script instala as dependências na máquina de construção, executa os testes e empacota o aplicativo. Saídas:
 
-### Homologação necessária em Windows
+```text
+dist\PropostaSeguroAuto\PropostaSeguroAuto.exe
+dist\PropostaSeguroAuto-26.10.23.1-Windows.zip
+```
 
-- Usuário sem privilégios administrativos; sem Python, Office e conexão externa na estação final.
-- Abrir a interface e cada um dos cinco PDFs de amostra autorizados; testar as opções separadamente.
-- Conferir manualmente campos, seleção de produtos, CPF/chassi ambíguos, condições de pagamento e valores contra a página original.
-- Corrigir campos; testar bloqueio de emissão antes da conferência e obrigatoriedade dos campos essenciais.
-- Exportar PDF/Excel, abrir em leitores corporativos, conferir paginação e planilha complementar.
-- Confirmar ausência de dados do cliente anterior, identificadores de cotação/apólice e identidade da seguradora.
-- Testar caminho com espaços/acentos, PDF com senha, OCR ausente, pasta sem permissão de escrita, antivírus e controles de aplicação.
+Distribua **a pasta completa ou o ZIP**, incluindo `_internal`; não copie somente o executável. O executável anterior não se atualiza automaticamente. Construa em uma nova pasta e feche a versão antiga antes de trocar o pacote. A marca salva é reaproveitada no perfil do usuário.
 
-## Executar pelo código para desenvolvimento
+Em computador corporativo, use o processo autorizado da TI para scripts, assinatura e distribuição, sem alterar as políticas do AD/AppLocker/WDAC. A TI deve homologar o executável com usuário padrão. O aplicativo precisa executar o processo filho OCR e escrever no temporário/perfil do usuário. Esta versão foi testada no Linux com tela virtual; o pacote Windows deve ser reconstruído e homologado no Windows.
+
+## Desenvolvimento
 
 ```sh
-python -m venv .venv
-# Use o Python do ambiente virtual conforme seu sistema.
 python -m pip install -r requirements.txt
 python -m unittest discover -s tests -v
 python run_app.py
 ```
 
-Requer Tkinter para a interface e Tesseract com português/inglês para PDFs escaneados. Opcionalmente configure `CREDPLUS_TESSERACT` com o caminho do executável e `CREDPLUS_TESSDATA` com a pasta dos idiomas. Sem OCR, o preenchimento manual permanece disponível. Dependências declaradas são apenas bibliotecas locais; a aplicação não usa rede. Os PDFs de clientes não estão incluídos neste código ou no pacote de distribuição. Os exemplos de saída usam dados fictícios.
+Requer Tkinter para a interface. Para OCR, instale Tesseract com português/inglês ou use `CREDPLUS_TESSERACT` e `CREDPLUS_TESSDATA`. Os testes gráficos requerem uma tela; no Linux, podem usar Xvfb. As fixtures comerciais contêm trechos de tabelas sem nomes, documentos de identidade ou contas de clientes; os PDFs originais não são distribuídos.
 
-## Atualizar da versão 0.1 para a 0.2
+A marca é armazenada em `%LOCALAPPDATA%\PropostaSeguroAuto\logo.png` no Windows. Para testes/ambientes especiais, `PROPOSTA_SETTINGS_DIR` substitui essa pasta. Nenhum projeto ou dado de cliente é salvo automaticamente nessa configuração.
 
-Feche o aplicativo e extraia o novo código em outra pasta. Na máquina Windows usada para construir, execute novamente `build_windows.ps1` com o mesmo diretório Tesseract autorizado. A versão nova só entra no programa depois da reconstrução: o executável anterior não muda automaticamente. Distribua a nova pasta completa `dist/CredplusLocal`, ou seu ZIP, para as estações de uso. Elas não precisam de Python, pip, Office ou instalação separada de Tesseract: esses componentes necessários ao processamento já acompanham o pacote gerado. A máquina de construção continua precisando de Python 3.12 e da distribuição OCR fornecida à construção. Preserve os documentos e o pacote anterior até conferir a atualização.
-
-O PDF demonstrativo está em `exemplos/Exemplo_PDF_Compacto.pdf` e usa somente dados fictícios.
+Veja `exemplos/Proposta_Exemplo.pdf`, `exemplos/Proposta_Exemplo.png`, `exemplos/Tela_Interface.png` e `RELATORIO.md`. Os exemplos usam dados pessoais fictícios e valores comerciais de demonstração.

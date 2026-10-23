@@ -1,2 +1,3 @@
-"""Credplus Local — processamento de propostas sem serviços externos."""
-__version__='0.2.0'
+"""Proposta Seguro Auto — processamento local de propostas de automóvel."""
+__version__='26.10.23.1'
+APP_NAME='Proposta Seguro Auto - Segurado v'+__version__

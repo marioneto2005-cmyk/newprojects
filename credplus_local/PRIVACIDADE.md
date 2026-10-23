@@ -1,5 +1,7 @@
-# Dados locais
+# Processamento e dados locais
 
-Não há telemetria, API externa, upload, integração com AD ou envio de documentos. O PDF de origem é aberto somente para leitura. Imagens de páginas para OCR ficam na pasta temporária do usuário e são removidas ao concluir ou ocorrer erro normalmente. Encerramento forçado/falha do sistema pode deixar resíduos `credplus-*` no temporário; a TI pode definir limpeza segundo sua política. Exclusão comum não é apagamento forense.
+Não há telemetria, API externa, upload ou integração com AD. Os documentos são abertos somente para leitura; o aplicativo não envia propostas. Campos e tabelas ficam em memória e são substituídos ao importar outro documento.
 
-Os campos ficam em memória até a troca/limpeza do formulário ou encerramento. PDF e XLSX gerados permanecem no destino escolhido e contêm dados pessoais. Aplicam-se controle de acesso, retenção e compartilhamento da empresa. O aplicativo não oferece criptografia própria nem gestão de consentimento. Evite pastas sincronizadas externamente se não forem autorizadas. Não inclua PDFs reais em repositórios de código ou logs de suporte. O processamento OCR usa subprocesso sem shell e sem enviar valores na linha de comando; as imagens temporárias são entradas locais.
+A única preferência persistida é a logomarca normalizada em `%LOCALAPPDATA%\PropostaSeguroAuto\logo.png` (ou pasta equivalente no Linux). Ela permanece até ser removida ou trocada. Contatos do atendimento e dados de clientes não são salvos automaticamente. PDF/PNG gerados contêm dados pessoais e permanecem na pasta escolhida pelo usuário, sujeitos aos controles de acesso e retenção da organização.
+
+OCR usa imagens temporárias locais que são removidas ao terminar normalmente. Encerramento forçado pode deixar resíduos `credplus-*` no temporário; exclusão comum não é apagamento forense. A TI pode aplicar limpeza e políticas de armazenamento. Não publique PDFs reais em repositórios ou logs de suporte. Os exemplos fornecidos usam identidade fictícia; as fixtures de testes são trechos comerciais sem documentos de identidade e contas de clientes.

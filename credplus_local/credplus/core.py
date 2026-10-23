@@ -23,7 +23,7 @@ FIELDS = [Field(*x) for x in [
  ('validade','Validade da proposta','Segurado','date','D7'),('inicio','Início da vigência','Segurado','date',''),('fim','Fim da vigência','Segurado','date',''),
  ('uso','Uso do veículo','Perfil','text','B10'),('trabalho','Uso para trabalho','Perfil','text','D10'),
  ('faculdade','Uso para faculdade','Perfil','text','B11'),('garagem','Garagem no pernoite','Perfil','text','D11'),
- ('jovens','Condutores jovens (preservar faixa etária)','Perfil','text','B12'),('cep','CEP de pernoite','Perfil','id','D12'),
+ ('jovens','Condutores jovens / faixa etária','Perfil','text','B12'),('cep','CEP de pernoite','Perfil','id','D12'),
  ('modelo','Marca / modelo','Veículo','text','B15'),('ano','Ano modelo / fabricação','Veículo','text','D15'),
  ('placa','Placa','Veículo','id','B16'),('chassi','Chassi','Veículo','id','D16'),
  ('combustivel','Combustível','Veículo','text','B17'),('zero','Zero km','Veículo','text','D17'),
@@ -43,7 +43,7 @@ FIELDS = [Field(*x) for x in [
  ('pagamento_outros','Condições de pagamento - débito / outros','Pagamento','text','C40'),
 ]]
 # Optional reviewed complements cover commercial details outside the spreadsheet slots.
-FIELDS += [Field(key,label,'Complementos revisados','supplement') for key,label in [
+FIELDS += [Field(key,label,'Informações adicionais','supplement') for key,label in [
  ('segurado_extra','Outros dados do segurado / condutor'),
  ('perfil_extra','Outros dados do perfil de risco'),
  ('veiculo_extra','Outros dados do veículo'),
@@ -51,13 +51,11 @@ FIELDS += [Field(key,label,'Complementos revisados','supplement') for key,label 
  ('franquias_extra','Outras franquias e condições'),
 ]]
 FIELD_MAP = {f.key:f for f in FIELDS}
-PROVIDER = re.compile(r'\b(?:Zurich|HDI|Allianz|Tokio\s*Marine|Yell?um|Porto\s*Seguro)\b',re.I)
 
 
 def safe_text(value):
-    """Output never copies raw source sections or insurer-specific metadata."""
-    s = PROVIDER.sub('', str(value)).strip()
-    return re.sub(r' +',' ',s)
+    """Keep names/brands as supplied; discard control characters only."""
+    return ''.join(c for c in str(value).strip() if c in '\n\t' or ord(c)>=32)
 
 
 def format_value(field, value):
@@ -116,10 +114,8 @@ def _layout_words(page):
     return out.getvalue().decode('utf-8')
 
 
-def extract_pdf(path, insurer, offer=1, progress=None):
-    if insurer not in INSURERS or not 1<=offer<=len(INSURERS[insurer]): raise ValueError('Selecione a seguradora e a opção corretas.')
+def read_pdf_text(path,progress=None):
     path=Path(path)
-    rules=json.loads((ASSETS/'regras.json').read_text(encoding='utf-8'))
     texts=[];methods=[]
     with fitz.open(path) as doc:
         if doc.needs_pass: raise ValueError('PDF protegido por senha. Forneça uma cópia autorizada sem senha.')
@@ -142,7 +138,13 @@ def extract_pdf(path, insurer, offer=1, progress=None):
                     text=_run(command).decode('utf-8');methods.append('OCR')
                 else:methods.append('texto')
                 texts.append(text)
-    full_text='\n\f\n'.join(texts)
+    return '\n\f\n'.join(texts),methods
+
+
+def extract_pdf(path, insurer, offer=1, progress=None):
+    if insurer not in INSURERS or not 1<=offer<=len(INSURERS[insurer]): raise ValueError('Selecione a seguradora e a opção corretas.')
+    rules=json.loads((ASSETS/'regras.json').read_text(encoding='utf-8'))
+    full_text,methods=read_pdf_text(path,progress)
     results=extract(full_text,insurer,offer,rules,corrected=True)
     if insurer=='Allianz' and 'OCR' in methods:
         from .tables import allianz_ocr_table
@@ -220,113 +222,11 @@ def _atomic_save(path,writer):
 
 
 def export_pdf(path,values,consultant='',phone=''):
-    """Compact A4 form modeled on the supplied spreadsheet; overflow stays legible."""
-    from reportlab.platypus import SimpleDocTemplate,Paragraph,Spacer,Table,TableStyle,PageBreak,KeepTogether
-    from reportlab.lib import colors
-    from reportlab.lib.styles import ParagraphStyle
-    from reportlab.lib.pagesizes import A4
-    clean=validate_values(values)
-    green=colors.HexColor('#006b58');light=colors.HexColor('#edf5f1')
-    styles={
-        'value':ParagraphStyle('Value',fontName='Helvetica',fontSize=7.5,leading=9.5),
-        'label':ParagraphStyle('Label',fontName='Helvetica-Bold',fontSize=7,leading=9),
-        'band':ParagraphStyle('Band',fontName='Helvetica-Bold',fontSize=8,leading=10,textColor=colors.white),
-        'brand':ParagraphStyle('Brand',fontName='Helvetica-Bold',fontSize=16,leading=19,textColor=green,alignment=1),
-        'title':ParagraphStyle('Title',fontName='Helvetica-Bold',fontSize=10,leading=13,alignment=1),
-        'small':ParagraphStyle('Small',fontName='Helvetica',fontSize=7,leading=9),
-        'detail':ParagraphStyle('Detail',fontName='Helvetica',fontSize=9,leading=12),
-        'detail_label':ParagraphStyle('DetailLabel',fontName='Helvetica-Bold',fontSize=10,leading=13,textColor=green),
-    }
-    def p(text,style='value'):
-        return Paragraph(html.escape(str(text)).replace('\n','<br/>'),styles[style])
-    width=A4[0]-56;col=width/4
-    rows=[];commands=[];appendix=[];rendered=set()
-    def spanrow(text,style='small',background=None):
-        i=len(rows);rows.append([p(text,style),'','','']);commands.append(('SPAN',(0,i),(3,i)))
-        if background:commands.append(('BACKGROUND',(0,i),(3,i),background))
-    def band(title):spanrow(title,'band',green)
-    def value(key,available):
-        rendered.add(key)
-        text=clean[key] or 'Não informado'
-        if clean[key] and FIELD_MAP[key].kind=='money':text='R$ '+text
-        paragraph=p(text)
-        # Preserve long reviewed information on a continuation page, never truncate or shrink it.
-        if paragraph.wrap(available-10,10000)[1]>20:
-            appendix.append((FIELD_MAP[key].label,text));return p(f'Ver complemento [{len(appendix)}]')
-        return paragraph
-    def pair(left_label,left_key,right_label,right_key):
-        rows.append([p(left_label,'label'),value(left_key,col),p(right_label,'label'),value(right_key,col)])
-    def full(label,key):
-        i=len(rows);rows.append([p(label,'label'),'',value(key,col*2),''])
-        commands.extend([('SPAN',(0,i),(1,i)),('SPAN',(2,i),(3,i))])
-    spanrow('SICOOB CREDPLUS','brand')
-    spanrow('COTAÇÃO DE SEGURO AUTOMÓVEL','title')
-    band('1. DADOS DO SEGURADO')
-    pair('Nome do proponente','nome','CPF / CNPJ','cpf')
-    pair('Principal condutor','condutor','CPF / CNPJ do condutor','cpfcond')
-    rows.append([p('Corretora / Cooperativa','label'),p('Sicoob Credplus'),p('Validade da proposta','label'),value('validade',col)])
-    pair('Início da vigência','inicio','Fim da vigência','fim')
-    band('2. PERFIL DE RISCO')
-    pair('Uso do veículo','uso','Uso para trabalho','trabalho')
-    pair('Uso para faculdade','faculdade','Garagem no pernoite','garagem')
-    pair('Condutores jovens / faixa etária','jovens','CEP de pernoite','cep')
-    band('3. DADOS DO VEÍCULO')
-    pair('Marca / modelo','modelo','Ano modelo / fabricação','ano')
-    pair('Placa','placa','Chassi','chassi')
-    pair('Combustível','combustivel','Veículo zero km','zero')
-    band('4. COBERTURAS CONTRATADAS E ASSISTÊNCIAS')
-    for label,key in [
-        ('Casco (colisão, incêndio, roubo / furto)','casco'),
-        ('Danos materiais a terceiros (RCF-V)','dm'),('Danos corporais a terceiros (RCF-V)','dc'),
-        ('APP - morte','appm'),('APP - invalidez permanente','appi')]:full(label,key)
-    rendered.add('appg')
-    if clean['appg']:full('APP - garantia conjunta por passageiro','appg')
-    for label,key in [('Danos morais / estéticos','morais'),('Proteção a vidros, faróis, lanternas e retrovisores','vidros'),
-                      ('Assistência 24 horas','assistencia'),('Carro reserva','reserva')]:full(label,key)
-    band('5. FRANQUIAS DO CASCO E DOS COMPONENTES')
-    pair('Franquia obrigatória do casco','franquia','Tipo de franquia','tipofranquia')
-    for a,ka,b,kb in [
-        ('Para-brisa','parabrisa','Lanterna LED','lanternaled'),
-        ('Vidros laterais','laterais','Retrovisor','retrovisor'),
-        ('Farol convencional','farol','Lanterna convencional','lanterna'),
-        ('Vidro traseiro','traseiro','Farol auxiliar / milha','auxiliar'),
-        ('Farol xenônio / LED','farolled','Lanterna auxiliar','lanternaaux')]:pair(a,ka,b,kb)
-    band('6. VALOR E FORMA DE PAGAMENTO')
-    full('Prêmio total da opção selecionada','total')
-    full('Condições de pagamento - cartão','pagamento_cartao')
-    full('Condições de pagamento - débito / outros','pagamento_outros')
-    band('7. COMO CONTRATAR')
-    spanrow('1. Confira os dados, o perfil de risco e as coberturas.  2. Confirme a forma de pagamento com o atendimento Sicoob.')
-    spanrow('Contratação sujeita à aceitação e às condições do produto. Este resumo não comprova contratação.')
-    spanrow('Não informado significa dado não localizado ou não fornecido; não significa cobertura não contratada.')
-    contact=f'Consultor / Gerente: {safe_text(consultant) or "__________________"} | WhatsApp: {safe_text(phone) or "__________________"}'
-    if p(contact,'small').wrap(width-10,10000)[1]>20:
-        appendix.append(('Contato do atendimento',contact));contact=f'Contato do atendimento: ver complemento [{len(appendix)}]'
-    spanrow(contact,'small',light)
-    for f in FIELDS:
-        if f.kind=='supplement':
-            rendered.add(f.key)
-            if clean[f.key]:appendix.append((f.label,clean[f.key]))
-    if rendered!=set(FIELD_MAP):raise RuntimeError('O modelo PDF precisa contemplar todos os campos revisados.')
-    if appendix:spanrow('Informações adicionais e textos extensos: consulte o complemento nas páginas seguintes.','small',light)
-    table=Table(rows,colWidths=[col]*4,hAlign='LEFT')
-    table.setStyle(TableStyle([
-        ('VALIGN',(0,0),(-1,-1),'MIDDLE'),('LEFTPADDING',(0,0),(-1,-1),5),('RIGHTPADDING',(0,0),(-1,-1),5),
-        ('TOPPADDING',(0,0),(-1,-1),2.5),('BOTTOMPADDING',(0,0),(-1,-1),2.5),
-        ('GRID',(0,2),(-1,-1),.3,colors.HexColor('#c5d8d0')),
-        ('BACKGROUND',(0,2),(-1,-1),colors.white),
-    ]+commands))
-    story=[table]
-    if appendix:
-        story += [PageBreak(),p('SICOOB CREDPLUS','brand'),Spacer(1,10),p('COMPLEMENTO DA COTAÇÃO','title'),Spacer(1,12)]
-        for number,(label,text) in enumerate(appendix,1):
-            story.extend([KeepTogether([p(f'[{number}] {label}','detail_label'),Spacer(1,4),p(text,'detail')]),Spacer(1,10)])
-    def build(dest):
-        doc=SimpleDocTemplate(str(dest),pagesize=A4,rightMargin=28,leftMargin=28,topMargin=24,bottomMargin=28,
-                              title='Cotação de Seguro Automóvel - Sicoob Credplus',author='Sicoob Credplus')
-        def footer(canvas,doc):
-            canvas.setFont('Helvetica',7);canvas.setFillColor(green)
-            canvas.drawString(28,13,'SICOOB CREDPLUS - Resumo para conferência')
-            canvas.drawRightString(A4[0]-28,13,f'Página {doc.page}')
-        doc.build(story,onFirstPage=footer,onLaterPages=footer)
-    _atomic_save(path,build)
+    # Compatibility API for callers using a single set of fields.
+    from .proposal import Proposal,Offer,COVER_KEYS,GLASS_KEYS
+    from .document import export_document
+    clean={key:format_value(FIELD_MAP[key],value) for key,value in values.items() if key in FIELD_MAP}
+    commercial={k:v for k,v in clean.items() if k in (*COVER_KEYS,*GLASS_KEYS,'total') and v}
+    common={k:v for k,v in clean.items() if k not in commercial and v}
+    proposal=Proposal('',common,[Offer('Proposta',commercial)] if commercial else [])
+    export_document(path,proposal,'pdf',consultant,phone)

@@ -1,0 +1,40 @@
+Coberturas                                                                                                                          LMG (R$)                                       Franquia (R$)                                       Prêmio (R$)
+Veículo - Colisão/Incêndio/Roubo                                                                                                    100% FIPE                                         A  - 3.487,16                                        1.425,56
+RCV - Danos Corporais                                                                                                               200.000,00                                                                                                89,92
+RCV - Danos Materiais                                                                                                               200.000,00                                                                                               269,72
+RCV - Danos Morais                                                                                                                   30.000,00                                                                                                17,98
+APP - Acidentes Pessoais de Passageiros (LMG por passageiro)                                                                         15.000,00                                                                                                44,15
+Diarias de Carro Reserva                                                                                                                    -                                                                                                 35,95
+Cobertura Especial para Vidros                                                                                                       15.000,00                                                                                               299,64
+Assistência 24 Horas                                                                                                                        -                                                                                                     -
+       Farol Convencional                                                                                                                                                                  325,00
+       Maquina de Vidros                                                                                                                                                                    90,00
+       Retrovisor Externo                                                                                                                                                                  225,00
+       Vidros Laterais                                                                                                                                                                     115,00
+       Lanterna Convencional                                                                                                                                                               195,00
+       Farol Matrix                                                                                                                                                                      2.075,00
+       Farol de Xenon/LED                                                                                                                                                                1.105,00
+       Retrovisor Interno                                                                                                                                                                   55,00
+       Pelicula                                                                                                                                                                              0,00
+       Vidro Traseiro                                                                                                                                                                      295,00
+       Pequenos Reparos Premium                                                                                                                                                            265,00
+       Lanterna de LED                                                                                                                                                                     245,00
+       Para-brisa                                                                                                                                                                          280,00
+       Pequenos Reparos Premium - Troca de Para-Choque                                                                                                                                     475,00
+          400 Km de Reboque e Km ilimitado para Sinistro
+
+Cláusulas
+38 - CARRO RESERVA BÁSICO 7 DIAS - LMG R$50,00 (DIÁRIA)
+         Data da Entrada                                     Valor de Entrada (R$)                                           Parcelas                        Valor das Demais Parcelas (R$)                                        Prêmio Total (R$)
+              28/10/2026                                                    0,00                                                  10                                                                                                      2.344,02
+                          Parcelas                                                Valor de Entrada (R$)                                             Valor das Demais (R$)                                                   Prêmio Total (R$)
+                                01                                                           2.344,02                                                               0,00                                                            2.344,02
+                            01 + 01                                                          1.172,01                                                           1.172,01                                                            2.344,02
+                            01 + 02                                                            781,34                                                             781,34                                                            2.344,02
+                            01 + 03                                                            586,00                                                             586,00                                                            2.344,02
+                            01 + 04                                                            468,80                                                             468,80                                                            2.344,02
+                            01 + 05                                                            390,67                                                             390,67                                                            2.344,02
+                            01 + 06                                                            334,86                                                             334,86                                                            2.344,02
+                            01 + 07                                                            293,00                                                             293,00                                                            2.344,02
+                            01 + 08                                                            260,45                                                             260,45                                                            2.344,02
+                            01 + 09                                                            234,40                                                             234,40                                                            2.344,02

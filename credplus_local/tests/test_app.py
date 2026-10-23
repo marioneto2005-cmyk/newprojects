@@ -39,8 +39,8 @@ class ValidationTests(unittest.TestCase):
  def test_allowlist(self):
   data=validate_values({**BASE,'numero_cotacao':'SEGREDO','numero_apolice':'SEGREDO','seguradora':'SEGREDO'})
   self.assertNotIn('SEGREDO',str(data));self.assertEqual(set(data),set(FIELD_MAP))
- def test_provider_name_removed(self):
-  self.assertEqual(format_value(FIELD_MAP['assistencia'],'Assistência Zurich'),'Assistência')
+ def test_provider_name_allowed(self):
+  self.assertEqual(format_value(FIELD_MAP['assistencia'],'Assistência Zurich'),'Assistência Zurich')
 
 class TableTests(unittest.TestCase):
  def test_separate_options_not_premiums(self):
@@ -90,16 +90,16 @@ class ExportTests(unittest.TestCase):
  def test_pdf_markup_safe(self):
   p=self.root/'resultado.pdf';export_pdf(p,{**BASE,'nome':'Cliente <exemplo> & teste'})
   with fitz.open(p) as d:self.assertIn('Cliente <exemplo> & teste',''.join(x.get_text() for x in d))
- def test_long_content_paginates(self):
+ def test_long_content_stays_on_one_page(self):
   p=self.root/'longo.pdf';export_pdf(p,{**BASE,'garagem':'Texto para conferência. '*45})
-  with fitz.open(p) as d:self.assertGreaterEqual(len(d),2)
+  with fitz.open(p) as d:self.assertEqual(len(d),1);self.assertIn("Texto para conferência.",d[0].get_text())
  def test_compact_standard_fits_one_a4_page(self):
   data={**BASE,'condutor':'CONDUTOR EXEMPLO','uso':'Particular','casco':'100% FIPE','dm':'200.000,00','dc':'200.000,00','appm':'10.000,00','appi':'10.000,00','appg':'20.000,00','franquia':'3.000,00','tipofranquia':'Reduzida 50%','pagamento_cartao':'10 parcelas sem juros'}
   p=self.root/'compacto.pdf';export_pdf(p,data)
   with fitz.open(p) as d:
    self.assertEqual(len(d),1);self.assertAlmostEqual(d[0].rect.width,595.28,places=1)
    text=d[0].get_text()
-   for section in ['1. DADOS DO SEGURADO','2. PERFIL DE RISCO','3. DADOS DO VEÍCULO','4. COBERTURAS','5. FRANQUIAS','6. VALOR','7. COMO CONTRATAR']:self.assertIn(section,text)
+   for section in ['CLIENTE E VEÍCULO','OPÇÕES DE COBERTURA','INFORMAÇÕES ADICIONAIS']:self.assertIn(section,text)
    self.assertIn('20.000,00',text)
  def test_compact_preserves_every_reviewed_field(self):
   from credplus.core import validate_values
@@ -116,14 +116,14 @@ class ExportTests(unittest.TestCase):
      for line in block.get('lines',[]):
       for span in line['spans']:
        self.assertGreaterEqual(span['size'],7)
-       self.assertGreaterEqual(span['bbox'][0],25)
-       self.assertLessEqual(span['bbox'][2],page.rect.width-25)
- def test_compact_overflow_has_reference_and_full_text(self):
+       self.assertGreaterEqual(span['bbox'][0],20)
+       self.assertLessEqual(span['bbox'][2],page.rect.width-15)
+ def test_one_page_preserves_long_field_full_text(self):
   text='Detalhe conferido. '*60+'FINAL_DO_TEXTO'
   p=self.root/'complemento.pdf';export_pdf(p,{**BASE,'garagem':text})
   with fitz.open(p) as d:
-   self.assertGreaterEqual(len(d),2);self.assertIn('Ver complemento [1]',d[0].get_text())
-   continuation=''.join(''.join(page.get_text().split()) for page in list(d)[1:])
+   self.assertEqual(len(d),1)
+   continuation=''.join(''.join(page.get_text().split()) for page in d)
    self.assertIn(''.join(text.split()),continuation)
  def test_failed_write_preserves_existing(self):
   p=self.root/'original.pdf';p.write_bytes(b'original')

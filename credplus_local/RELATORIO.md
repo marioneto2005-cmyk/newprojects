@@ -1,37 +1,34 @@
-# Entrega 0.2 — Credplus Local
+# Proposta Seguro Auto - Segurado v26.10.23.1
 
-Primeiro protótipo funcional para homologação, desenvolvido em Python. Entrega código-fonte, modelo limpo, regras de leitura, interface desktop, testes e script de empacotamento Windows. **Não inclui um executável Windows já compilado.**
+## Alterações entregues
 
-## Atualização 0.2 — impressão compacta
+Interface reorganizada em painel lateral, cartões e abas; nome e versão atualizados. A importação abre uma janela de Corretora, lê automaticamente o documento e inclui todas as opções reconhecidas. Seletores antigos de origem/opção, confirmação de campos, checkbox de conferência, mensagem inferior estática e botão Excel foram removidos. Edição direta permanece disponível. Exportações PDF/PNG compartilham o mesmo desenho e omitem campos sem valor. Logomarca persistente no perfil do usuário, com seleção no canto superior direito.
 
-PDF redesenhado como uma ficha A4 de quatro colunas, com as sete seções do Excel. O exemplo fictício e o cenário padrão com APP conjunta cabem em uma página. Valores longos e complementos seguem em páginas adicionais com referências, preservando todos os campos revisados. Foram executados 32 testes sem falhas ou pulos no Linux com Xvfb, incluindo o fluxo da interface até a geração de PDF e Excel. Os novos testes verificam uma página A4 no caso padrão, preservação de todos os valores, referências de complemento, fonte mínima de 7 pontos e limites horizontais da página. O exemplo foi renderizado e inspecionado visualmente. Não foi compilado um novo executável Windows neste ambiente; a atualização precisa de reconstrução na máquina Windows usada pelo usuário.
+## Oito PDFs analisados
 
-## Histórico: validação inicial de extração na versão 0.1
+Todos os oito anexos novos contêm texto extraível. Foram processados pela API completa de importação e geração, sem depender de textos ou resultados armazenados de outro cliente.
 
-As cinco propostas anexadas foram abertas e processadas localmente. HDI possui texto; as outras quatro exigiram OCR local português/inglês. Resultados da primeira opção:
+| Arquivo | Identificação | Opções | Linhas de planos de pagamento |
+|---|---|---:|---:|
+| ALLIANZ.pdf | Allianz | 6 | 180 |
+| ALRIO.pdf | Aliro | 1 | 1 cronograma com 10 parcelas |
+| AZUL.pdf | Azul | 1 | 74 |
+| HDI.pdf | HDI | 2 | 64 |
+| MAPFRE.pdf | Mapfre | 1 | 42 |
+| TOKIO.pdf | Tokio Marine | 2 | 68 |
+| YELUM.pdf | Yelum | 1 | 22 |
+| ZURICH.pdf | Zurich | 1 | 10 |
 
-| Proposta | Páginas | Leitura | Campos candidatos / 44 campos padrão |
-|---|---:|---|---:|
-| Allianz | 6 | OCR | 33 / 44 |
-| HDI | 2 | Texto com preservação de tabelas | 35 / 44 |
-| Tokio Marine | 5 | OCR | 28 / 44 |
-| Yelum | 2 | OCR | 35 / 44 |
-| Zurich | 2 | OCR | 34 / 44 |
+Uma linha de plano liga modalidade, opção de cobertura e quantidade de parcelas; não representa uma parcela avulsa. Allianz: 6 opções × 3 modalidades × 10 quantidades. HDI: dois tipos de indenização com cartão, débito e carnê. Tokio: Auto e Auto Clássico, com diferentes juros e totais por modalidade. Mapfre mantém parcelas 11/12 apenas para cartão. Azul mantém os descontos e a ausência da primeira parcela em determinada modalidade sem deslocar colunas. Yelum inclui 11 parcelas. Zurich mantém entrada e total. Aliro preserva primeira parcela R$284,26, oito de R$284,19 e última de R$284,20, total R$2.841,98, sem copiar dados bancários.
 
-“Candidato” significa que há um valor para conferir; **não é uma medida de acerto**. Não foi feita conferência humana de todos os dados contra as imagens dos PDFs. Campos sem leitura ficam em branco, com conferência manual obrigatória. Há outros cinco campos manuais de complementos, totalizando 49 campos no formulário. Condições de pagamento são manuais nesta versão. Detalhes fora das regras/layouts conhecidos não são transferidos automaticamente.
+A Allianz apresenta diferença de um centavo no Master entre coberturas (R$2.163,59) e pagamento à vista (R$2.163,60); ambos são preservados e a diferença aparece em nota. A opção Roubo e Furto mantém sua restrição a eventos cobertos, sem ser apresentada como colisão compreensiva.
 
-Foram executados 29 testes automatizados de validação, exportação, segurança de células Excel, tabelas com múltiplas opções, limpeza de dados e interface. Todos passaram, sem testes pulados, com tela virtual Xvfb no Linux. A interface foi exercitada até a geração efetiva de PDF e XLSX. Também passaram 36 comparações numéricas contra referências das propostas já disponíveis no projeto, incluindo HDI e Tokio nas duas opções e limites de cobertura Allianz nas cinco opções. Essas comparações não substituem a revisão integral do documento final.
+## Validação
 
-### Divergência de valores identificada
+62 testes automatizados passaram, sem erros, falhas ou pulos, no Linux com Xvfb. Exercitam os oito layouts comerciais, correspondência das colunas, juros, totais, cronograma desigual, ausência de mistura entre clientes, formulário e popup, geração sem conferência, edição imediata, persistência da marca, prévia e exportação PDF/PNG. A imagem PNG foi comparada pixel a pixel com a renderização a 150 dpi da página PDF. Os oito documentos reais também geraram uma página sem campos “Não informado”, e seus valores de parcelas apareceram na saída. Exemplo e interface foram inspecionados visualmente.
 
-Na Allianz, a opção Exclusivo apresenta R$ 2.383,99 em coberturas e R$ 2.384,00 no pagamento. O leitor detectou a diferença e deixa o total sem preenchimento automático para resolução manual. Não transforma prêmio de cobertura em limite de indenização quando a tabela está danificada. Não reaproveita o cliente de um formulário anterior.
+Os testes não estabelecem precisão universal nem conferência humana integral de todos os dados pessoais. Layouts novos e OCR podem ter campos omitidos. A versão remove a revisão obrigatória conforme solicitado; não converte valores ausentes em estimativas.
 
-### Saídas
+## Página única e distribuição
 
-PDF com identidade Sicoob e seções do modelo; Excel com a primeira aba do modelo e uma aba de complemento. Os arquivos de demonstração entregues usam dados fictícios. O modelo distribuído não contém os clientes nem os contatos que estavam na planilha de exemplo. Consultor e WhatsApp começam em branco. Os PDFs de clientes e os resultados privados de extração não fazem parte do pacote.
-
-## O que falta para a versão Windows de produção
-
-A construção e a execução do pacote Windows não foram realizadas neste ambiente Linux. A TI precisa fornecer uma distribuição completa e autorizada de Tesseract para Windows, com português/inglês, e executar `build_windows.ps1` em Windows com Python 3.12 x64. O script constrói uma pasta portátil, com Python e bibliotecas embarcados via PyInstaller, e gera um ZIP de distribuição. Depois, a TI deve homologar execução com usuário padrão e as políticas reais de AD/AppLocker/WDAC/antivírus, assinatura e distribuição. A aplicação precisa conseguir executar o OCR filho e escrever no temporário do usuário. Não pressupõe privilégios administrativos na estação final.
-
-Consulte README.md para instruções completas e LICENCAS.md para as condições dos componentes, incluindo a licença AGPL/comercial do PyMuPDF. O aplicativo e os testes desta entrega foram validados no Linux; não há promessa de liberação automática nas máquinas corporativas.
+A página digital tem largura A4 e altura variável para manter o conteúdo legível e completo. Uma proposta extensa não equivale a uma folha A4 física sem redução na impressão. O PNG usa a mesma página. Não há novo executável Windows compilado nesta máquina Linux: o script de construção atualizado deve ser executado no Windows. O pacote de distribuição resultante inclui Python e OCR, dispensando essas instalações nas estações finais, e mantém a necessidade de homologação nas políticas corporativas.
