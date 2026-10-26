@@ -104,7 +104,7 @@ class ExportTests(unittest.TestCase):
  def test_compact_preserves_every_reviewed_field(self):
   from credplus.core import validate_values
   data={}
-  ids={'cpf':'52998224725','cpfcond':'52998224725','cep':'12345678','placa':'ABC1D23','chassi':'1HGCM82633A004352'}
+  ids={'cpf':'52998224725','cpfcond':'52998224725','cep':'12345678','cep_segurado':'12345678','cep_circulacao':'12345678','placa':'ABC1D23','chassi':'1HGCM82633A004352'}
   for i,f in enumerate(FIELDS):
    data[f.key]=(f'{100+i},00' if f.kind=='money' else '23/10/2026' if f.kind=='date' else ids[f.key] if f.kind=='id' else 'valor_'+f.key)
   p=self.root/'todos.pdf';export_pdf(p,data)

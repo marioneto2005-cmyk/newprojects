@@ -5,7 +5,7 @@ from tkinter import ttk,filedialog,messagebox,simpledialog
 from PIL import Image,ImageTk
 import fitz
 from . import __version__,APP_NAME
-from .core import FIELDS,FIELD_MAP,format_value
+from .core import FIELDS,FIELD_MAP,format_value,ASSETS
 from .proposal import Proposal,Offer,Payment,CORRETORAS,COVER_KEYS,GLASS_KEYS,build_proposal
 from .document import export_document,pdf_bytes,LABELS
 from .settings import saved_logo,save_logo,remove_logo
@@ -14,7 +14,12 @@ BG='#f3f6f8';WHITE='#ffffff';INK='#19323f';MUTED='#6c808a';GREEN='#087763';NAVY=
 
 class App(tk.Tk):
     def __init__(self):
-        super().__init__();self.title(APP_NAME);self.geometry('1380x880');self.minsize(1120,740);self.configure(bg=BG)
+        if os.name=='nt':
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('PropostaSeguroAuto.Segurado')
+        super().__init__();self._app_icon=tk.PhotoImage(file=str(ASSETS/'calculator.png'));self.iconphoto(True,self._app_icon)
+        if os.name=='nt':self.iconbitmap(default=str(ASSETS/'calculator.ico'))
+        self.title(APP_NAME);self.geometry('1380x880');self.minsize(1120,740);self.configure(bg=BG)
         self.file=None;self.proposal=Proposal('');self.values=self.proposal.values;self.busy=False;self.events=queue.Queue();self.logo=saved_logo();self.editor_popup=None
         self.consultant=tk.StringVar();self.phone=tk.StringVar();self.client_vars={};self.loading_fields=False;self.preview_image=None;self.logo_image=None;self.preview_dirty=True
         self._style();self._build();self._refresh_logo();self.poll_id=self.after(100,self._poll);self.protocol('WM_DELETE_WINDOW',self._close)
@@ -96,6 +101,8 @@ class App(tk.Tk):
         inside=ttk.Frame(canvas,style='Card.TFrame',padding=18);win=canvas.create_window((0,0),window=inside,anchor='nw')
         inside.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')));canvas.bind('<Configure>',lambda e:canvas.itemconfigure(win,width=e.width))
         fields=[f for f in FIELDS if f.section in ('Segurado','Perfil','Veículo') or f.kind=='supplement']
+        order={'Segurado':0,'Perfil':1,'Veículo':2}
+        fields.sort(key=lambda f:order.get(f.section,3))
         section=None;row=0;position=0
         for f in fields:
             if f.section!=section:
@@ -118,7 +125,7 @@ class App(tk.Tk):
         ttk.Label(frame,text='Qual é a Corretora?',font=('Segoe UI',17,'bold')).pack(anchor='w')
         ttk.Label(frame,text=path.name,style='Muted.TLabel',wraplength=400).pack(anchor='w',pady=(6,16))
         selected=tk.StringVar();result=[]
-        suggested={'ALRIO':'Aliro','ALIRO':'Aliro','TOKIO':'Tokio Marine','YELUM':'Yelum'}
+        suggested={'ALRIO':'Aliro','ALIRO':'Aliro','TOKIO':'Tokio Marine','YELUM':'Yelum','PORTO':'Porto Seguro'}
         for name in CORRETORAS:
             if name.upper() in path.stem.upper():selected.set(name)
         for key,value in suggested.items():

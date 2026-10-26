@@ -8,12 +8,12 @@ from credplus.document import export_document,pdf_bytes
 from credplus.settings import save_logo,saved_logo,remove_logo
 
 FIX=Path(__file__).parent/'fixtures_commercial'
-NAMES={'ALLIANZ':'Allianz','ALRIO':'Aliro','AZUL':'Azul','HDI':'HDI','MAPFRE':'Mapfre','TOKIO':'Tokio Marine','YELUM':'Yelum','ZURICH':'Zurich'}
+NAMES={'ALLIANZ':'Allianz','ALRIO':'Aliro','AZUL':'Azul','HDI':'HDI','MAPFRE':'Mapfre','TOKIO':'Tokio Marine','YELUM':'Yelum','ZURICH':'Zurich','PORTO':'Porto Seguro'}
 def load(name):return parse_proposal((FIX/(name+'.txt')).read_text(encoding='utf-8'),NAMES[name])
 
 class CommercialTests(unittest.TestCase):
- def test_eight_layouts_option_and_payment_counts(self):
-  expected={'ALLIANZ':(6,180),'ALRIO':(1,1),'AZUL':(1,74),'HDI':(2,64),'MAPFRE':(1,42),'TOKIO':(2,68),'YELUM':(1,22),'ZURICH':(1,10)}
+ def test_all_layouts_option_and_payment_counts(self):
+  expected={'ALLIANZ':(6,180),'ALRIO':(1,1),'AZUL':(1,74),'HDI':(2,64),'MAPFRE':(1,42),'TOKIO':(1,34),'YELUM':(1,22),'ZURICH':(1,10),'PORTO':(1,54)}
   for name,(offers,payments) in expected.items():
    with self.subTest(name=name):
     p=load(name);self.assertEqual(len(p.offers),offers);self.assertEqual(len(p.payments),payments)
@@ -34,12 +34,12 @@ class CommercialTests(unittest.TestCase):
   self.assertTrue(any(r.offer==p.offers[1].name and r.mode=='Carnê' and r.installments==2 and r.amount=='1.806,80' for r in p.payments))
   self.assertFalse(any(r.interest for r in p.payments)) # no invented "sem juros"
  def test_tokio_preserves_interest_totals(self):
-  p=load('TOKIO');self.assertEqual([o.values['total'] for o in p.offers],['4.048,28','3.893,94'])
+  p=load('TOKIO');self.assertEqual([o.values['total'] for o in p.offers],['4.048,28'])
   r=next(r for r in p.payments if r.offer=='Auto' and r.mode=='Débito / Pix automático' and r.installments==6)
   self.assertEqual((r.amount,r.total,r.interest),('700,21','4.202,15','3,80%'))
- def test_tokio_additional_benefits_keep_option_differences(self):
-  p=load('TOKIO');self.assertEqual(p.offers[0].values['garantia_zero'],'180 dias');self.assertEqual(p.offers[1].values['garantia_zero'],'30 dias')
-  self.assertEqual(p.offers[0].values['isencao_terceiro'],'Disponivel');self.assertEqual(p.offers[1].values['isencao_terceiro'],'Nao Disponivel')
+ def test_tokio_keeps_auto_benefits_without_classico(self):
+  p=load('TOKIO');self.assertEqual(p.offers[0].values['garantia_zero'],'180 dias');self.assertEqual(len(p.offers),1)
+  self.assertEqual(p.offers[0].values['isencao_terceiro'],'Disponivel');self.assertTrue(all('Clássico' not in r.offer for r in p.payments))
   self.assertIn('reboque Ilimitado',p.offers[0].values['assistencia'])
  def test_mapfre_missing_methods_do_not_shift_11x(self):
   p=load('MAPFRE');eleven=[r for r in p.payments if r.installments==11]
@@ -70,7 +70,7 @@ class CommercialTests(unittest.TestCase):
 class VisualDocumentTests(unittest.TestCase):
  def setUp(self):self.tmp=tempfile.TemporaryDirectory();self.root=Path(self.tmp.name)
  def tearDown(self):self.tmp.cleanup()
- def test_all_eight_layouts_are_single_page_and_no_placeholders(self):
+ def test_all_layouts_are_single_page_and_no_placeholders(self):
   for name in NAMES:
    p=load(name);p.values.update(nome='CLIENTE DEMONSTRATIVO',modelo='VEÍCULO EXEMPLO')
    with fitz.open(stream=pdf_bytes(p),filetype='pdf') as d:

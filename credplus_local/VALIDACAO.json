@@ -1,8 +1,8 @@
 {
-  "versao": "26.10.26.1",
+  "versao": "26.10.26.2",
   "plataforma_validacao": "Linux x64, Python 3.12.14, Tkinter com Xvfb",
   "testes": {
-    "executados": 81,
+    "executados": 93,
     "falhas": 0,
     "erros": 0,
     "pulados": 0
@@ -16,13 +16,57 @@
   "conferencia_humana_integral_dados_pessoais": false,
   "integracoes_reais": [
     {
+      "arquivo": "alliaz-auto.pdf",
+      "seguradora": "Allianz",
+      "metodos": [
+        "OCR",
+        "OCR",
+        "OCR",
+        "OCR",
+        "OCR",
+        "OCR"
+      ],
+      "paginas_lidas": 6,
+      "opcoes": 5,
+      "planos_pagamento": 146,
+      "paginas_saida": 1,
+      "campos": [
+        "ano",
+        "cep",
+        "chassi",
+        "condutor",
+        "cpf",
+        "cpfcond",
+        "farol",
+        "farolled",
+        "fim",
+        "inicio",
+        "lanternaaux",
+        "lanternaled",
+        "laterais",
+        "modelo",
+        "nome",
+        "parabrisa",
+        "placa",
+        "retrovisor",
+        "traseiro",
+        "uso",
+        "validade",
+        "zero"
+      ]
+    },
+    {
       "arquivo": "YELUM.pdf",
       "seguradora": "Yelum",
+      "metodos": [
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 2,
       "opcoes": 1,
       "planos_pagamento": 22,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
         "cep",
         "chassi",
@@ -41,22 +85,31 @@
         "traseiro",
         "uso",
         "validade"
-      ],
-      "cabecalho_em_uma_linha": true
+      ]
     },
     {
       "arquivo": "ALRIO.pdf",
       "seguradora": "Aliro",
+      "metodos": [
+        "texto",
+        "texto",
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 4,
       "opcoes": 1,
       "planos_pagamento": 1,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
+        "bairro",
+        "cep_segurado",
         "chassi",
+        "cidade_uf",
         "condutor",
         "cpf",
         "cpfcond",
+        "endereco",
         "farol",
         "farolled",
         "fim",
@@ -73,17 +126,20 @@
         "trabalho",
         "traseiro",
         "uso"
-      ],
-      "cabecalho_em_uma_linha": true
+      ]
     },
     {
       "arquivo": "ZURICH.pdf",
       "seguradora": "Zurich",
+      "metodos": [
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 2,
       "opcoes": 1,
       "planos_pagamento": 10,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
         "cep",
         "chassi",
@@ -108,17 +164,23 @@
         "traseiro",
         "uso",
         "validade"
-      ],
-      "cabecalho_em_uma_linha": true
+      ]
     },
     {
       "arquivo": "AZUL.pdf",
       "seguradora": "Azul",
+      "metodos": [
+        "texto",
+        "texto",
+        "texto",
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 5,
       "opcoes": 1,
       "planos_pagamento": 74,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
         "cep",
         "chassi",
@@ -132,17 +194,23 @@
         "nome",
         "placa",
         "uso"
-      ],
-      "cabecalho_em_uma_linha": true
+      ]
     },
     {
       "arquivo": "TOKIO.pdf",
       "seguradora": "Tokio Marine",
+      "metodos": [
+        "texto",
+        "texto",
+        "texto",
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 5,
-      "opcoes": 2,
-      "planos_pagamento": 68,
+      "opcoes": 1,
+      "planos_pagamento": 34,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
         "cep",
         "chassi",
@@ -163,20 +231,24 @@
         "uso",
         "validade",
         "zero"
-      ],
-      "cabecalho_em_uma_linha": true
+      ]
     },
     {
       "arquivo": "HDI.pdf",
       "seguradora": "HDI",
+      "metodos": [
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 2,
       "opcoes": 2,
       "planos_pagamento": 64,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
         "auxiliar",
         "cep",
+        "cep_circulacao",
         "combustivel",
         "condutor",
         "cpf",
@@ -197,17 +269,52 @@
         "traseiro",
         "uso",
         "validade"
+      ]
+    },
+    {
+      "arquivo": "PORTO.pdf",
+      "seguradora": "Porto Seguro",
+      "metodos": [
+        "OCR",
+        "OCR",
+        "OCR",
+        "OCR"
       ],
-      "cabecalho_em_uma_linha": true
+      "paginas_lidas": 4,
+      "opcoes": 1,
+      "planos_pagamento": 54,
+      "paginas_saida": 1,
+      "campos": [
+        "ano",
+        "cep",
+        "combustivel",
+        "condutor",
+        "cpf",
+        "cpfcond",
+        "fim",
+        "inicio",
+        "modelo",
+        "nome",
+        "placa",
+        "uso"
+      ]
     },
     {
       "arquivo": "ALLIANZ.pdf",
       "seguradora": "Allianz",
+      "metodos": [
+        "texto",
+        "texto",
+        "texto",
+        "texto",
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 6,
       "opcoes": 6,
       "planos_pagamento": 180,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
         "auxiliar",
         "cep",
@@ -233,17 +340,21 @@
         "uso",
         "validade",
         "zero"
-      ],
-      "cabecalho_em_uma_linha": true
+      ]
     },
     {
       "arquivo": "MAPFRE.pdf",
       "seguradora": "Mapfre",
+      "metodos": [
+        "texto",
+        "texto",
+        "texto"
+      ],
       "paginas_lidas": 3,
       "opcoes": 1,
       "planos_pagamento": 42,
       "paginas_saida": 1,
-      "campos_comuns": [
+      "campos": [
         "ano",
         "cep",
         "chassi",
@@ -254,8 +365,7 @@
         "nome",
         "uso",
         "zero"
-      ],
-      "cabecalho_em_uma_linha": true
+      ]
     }
   ],
   "correcao_edicao": {
@@ -277,5 +387,16 @@
     "tokio_campos_de_identidade_e_veiculo_verificados": true,
     "cpf_condutor_reutilizado_apenas_para_mesma_pessoa": true,
     "cep_yelum_preservado_como_parcial": true
+  },
+  "revisao_26_10_26_2": {
+    "realce_amarelo_pdf_png_testado": true,
+    "titulo_secao": "Franquia e Assistências",
+    "tokio_somente_auto": true,
+    "porto_incluida": true,
+    "icone_calculadora_png_ico": true,
+    "interface_linux_icon_loaded": true,
+    "icone_barra_tarefas_windows_validado": false,
+    "allianz_ocr_celulas_pagamento_lidas": 146,
+    "allianz_ocr_celulas_sem_leitura_valida": 4
   }
 }

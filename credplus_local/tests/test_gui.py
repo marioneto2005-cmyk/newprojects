@@ -16,7 +16,7 @@ class DesktopTests(unittest.TestCase):
  def populated(self):
   a=self.app;a.proposal=Proposal('HDI',{'nome':'CLIENTE EXEMPLO','modelo':'VEÍCULO EXEMPLO'},[Offer('Auto',{'total':'2.000,00','dm':'200.000,00'})],[Payment('Auto','Cartão',10,'200,00')]);a._populate();a.update();return a
  def test_name_and_removed_controls(self):
-  a=self.app;self.assertEqual(a.title(),APP_NAME);self.assertFalse(hasattr(a,'confirm'));self.assertFalse(hasattr(a,'reviewed'));self.assertFalse(hasattr(a,'xlsxbutton'));self.assertFalse(hasattr(a,'offerbox'));self.assertFalse(hasattr(a,'insbox'))
+  a=self.app;self.assertEqual(a.title(),APP_NAME);self.assertEqual(a._app_icon.width(),256);self.assertFalse(hasattr(a,'confirm'));self.assertFalse(hasattr(a,'reviewed'));self.assertFalse(hasattr(a,'xlsxbutton'));self.assertFalse(hasattr(a,'offerbox'));self.assertFalse(hasattr(a,'insbox'))
   def walk(w):
    for c in w.winfo_children():yield c;yield from walk(c)
   self.assertFalse(any(w.winfo_class()=='TCheckbutton' for w in walk(a)))
@@ -72,7 +72,7 @@ class DesktopTests(unittest.TestCase):
   self.assertTrue(a.logo.is_file());source.unlink();a.destroy()
   from credplus.gui import App
   self.app=App();self.app.update();self.assertTrue(self.app.logo.is_file());self.assertIsNotNone(self.app.logo_image)
- def test_popup_lists_all_eight_and_no_option_choice(self):
+ def test_popup_lists_all_available_insurers_and_no_option_choice(self):
   a=self.app
   def select():
    for popup in a.winfo_children():

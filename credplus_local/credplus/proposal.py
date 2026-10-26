@@ -6,8 +6,8 @@ import json,re
 from .rule_engine import extract,norm,MONEY
 from .core import ASSETS,FIELD_MAP,format_value,read_pdf_text
 
-CORRETORAS=('Aliro','Allianz','Azul','HDI','Mapfre','Tokio Marine','Yelum','Zurich')
-COVER_KEYS=('casco','dm','dc','morais','appm','appi','appg','defesa','vidros','assistencia','reserva','franquia','tipofranquia','isencao_terceiro','desconto_despesas','reserva_terceiro','garantia_zero','martelinho','pintura','assistencia_casa','objetos')
+CORRETORAS=('Aliro','Allianz','Azul','HDI','Mapfre','Porto Seguro','Tokio Marine','Yelum','Zurich')
+COVER_KEYS=('casco','dm','dc','morais','appm','appi','appg','defesa','vidros','assistencia','reserva','franquia','tipofranquia','isencao_terceiro','desconto_despesas','reserva_terceiro','garantia_zero','martelinho','pintura','assistencia_casa','objetos','res_incendio','res_rcf','res_aluguel')
 GLASS_KEYS=('parabrisa','laterais','traseiro','farol','farolled','lanterna','lanternaled','retrovisor','auxiliar','lanternaaux','maquinavidros','retrovisorinterno','pelicula','farolmatrix','pequenos_reparos','parachoque','retrovisorled')
 NUM=re.compile(r'(?<![\d.,])'+MONEY+r'(?![\d.,])')
 
@@ -53,7 +53,7 @@ def display(key,value):
     if key in FIELD_MAP:
         try:return format_value(FIELD_MAP[key],value)
         except ValueError:return ''
-    if (key=='defesa' or key in GLASS_KEYS) and isinstance(value,(int,float)):
+    if (key in ('defesa','res_incendio','res_rcf','res_aluguel') or key in GLASS_KEYS) and isinstance(value,(int,float)):
         return f'{value:,.2f}'.replace(',','_').replace('.',',').replace('_','.')
     return str(value)
 
@@ -102,6 +102,35 @@ def resolve_driver_identity(values):
     return values
 
 
+def insured_addresses(text):
+    """Keep insured/overnight addresses separate from broker, branch and legal addresses."""
+    t=norm(text);result={}
+    header=re.search(r'^\s*DADOS (?:DO(?:\(A\))?|DA) (?:PROPONENTE/)?SEGURADO(?:\(A\))?\s*$',t,re.I|re.M)
+    if header:
+        tail=t[header.end():]
+        boundary=re.search(r'^\s*DADOS (?:DO|DA|DE)\b',tail,re.I|re.M)
+        scope=tail[:boundary.start()] if boundary else tail
+        lines=scope.splitlines()
+        for i,line in enumerate(lines):
+            m=re.match(r'^\s*Endereco *: *(\S.+)$',line,re.I)
+            if m:assign(result,'endereco',m[1])
+            elif re.fullmatch(r' *Endereco *:? *',line,re.I):
+                value=next((s.strip() for s in lines[i+1:i+3] if s.strip()),'')
+                if value and not re.match(r'Bairro|Cidade|CEP|Telefone',value,re.I):assign(result,'endereco',value)
+            if re.match(r'^ *Bairro +Cidade +UF +CEP',line,re.I):
+                cells=_table_values(line,lines[i+1:i+2],[('bairro',r'Bairro'),('_cidade',r'Cidade'),('_uf',r'\bUF\b'),('cep_segurado',r'\bCEP\b')])
+                for key in ('bairro','cep_segurado'):
+                    if cells.get(key):assign(result,key,cells[key])
+                city=' / '.join(cells.get(k,'') for k in ('_cidade','_uf') if cells.get(k))
+                if city:assign(result,'cidade_uf',city)
+    for key,label in [('endereco','Endereco (?:residencial|do segurado|do proponente)'),('endereco_pernoite','Endereco (?:de|do local de) pernoite'),('cep_segurado','CEP (?:do segurado|cadastral)'),('cep_circulacao','CEP de Circulacao')]:
+        value=read_match(t,r'^ *'+label+r': *([^\n]+?)(?= {2,}|$)')
+        if value:assign(result,key,value)
+    m=re.search(r'CEP de pernoite do veiculo: *([\d-]+) +Cidade: *(.+?) +UF: *([A-Z]{2})(?= |$)',t,re.I)
+    if m:assign(result,'cep',m[1]);assign(result,'cidade_pernoite',m[2].strip()+' / '+m[3])
+    return result
+
+
 def common_fields(text,company):
     rules=json.loads((ASSETS/'regras.json').read_text(encoding='utf-8'))
     legacy_company='Yelum' if company=='Aliro' else company
@@ -120,7 +149,7 @@ def common_fields(text,company):
         for pattern in choices:
             value=read_match(t,pattern)
             if value:assign(common,key,re.split(r' {2,}',value)[0]);break
-    if company=='Azul':
+    if company in ('Azul','Porto Seguro'):
         lines=t.splitlines()
         def following(header):
             for i,line in enumerate(lines):
@@ -212,6 +241,7 @@ def common_fields(text,company):
                 if len(parts)>=2:assign(common,'chassi',parts[0]);assign(common,'placa',parts[1])
         m=re.search(r'Das 24:00hs de (\d{2}/\d{2}/\d{4}) as 24:00hs de (\d{2}/\d{2}/\d{4})',t)
         if m:assign(common,'inicio',m[1]);assign(common,'fim',m[2])
+    common.update(insured_addresses(text))
     return resolve_driver_identity(common)
 
 
@@ -245,15 +275,34 @@ def allianz(text,p):
             if len(vals)==n:
                 for name,value in zip(group,vals):assign(offers[name].values,key,value)
     p.offers=[offers[n] for n in order]
-    mode=''
+    deductible=re.search(r'FRANQUIA *[-–] *PARTICIPACAO OBRIGATORIA(.*?)(?=ASSISTENCIA A VIDROS|OUTRAS FORMAS DE PAGAMENTO|$)',norm(text),re.I|re.S)
+    if deductible:
+        candidates=[]
+        for line in deductible[1].splitlines():
+            m=re.match(r'^ *(?!Voce|Franquia\b)(.+?) +(?:R\$ *)?('+MONEY+r') *$',line,re.I)
+            if m:candidates.append((compact(m[1]),m[2]))
+        if len(set(candidates))==1:
+            kind,amount=candidates[0]
+            for offer in p.offers:
+                if 'Roubo e Furto' not in offer.name:
+                    assign(offer.values,'franquia',money_float(amount));assign(offer.values,'tipofranquia',kind)
+    mode='';in_payments=False
     for line in lines:
+        if re.search(r'OUTRAS FORMAS DE PAGAMENTO',line,re.I):in_payments=True
+        if re.match(r'^ *SEU CORRETOR',line,re.I):in_payments=False;mode=''
+        if not in_payments:continue
         for key in ['Boleto Bancario','Debito em Conta','Cartao de Credito']:
-            if key.lower() in line.lower() and 'Oferta' in line:mode={'Boleto Bancario':'Boleto','Debito em Conta':'Débito em conta','Cartao de Credito':'Cartão de crédito'}[key]
+            if re.match(r'^ *'+key+r'\b',line,re.I):mode={'Boleto Bancario':'Boleto','Debito em Conta':'Débito em conta','Cartao de Credito':'Cartão de crédito'}[key]
         m=re.match(r'^\s*(\d{1,2}) +(sem juros|[\d.,]+%) +(.+)$',line,re.I)
         if mode and m:
-            nums=amounts(m[3])
-            if len(nums)==len(p.offers):
-                for name,amount in zip(order,nums):p.payments.append(Payment(name,mode,int(m[1]),amount,interest=m[2]))
+            cells=re.split(r' {2,}|\t+',m[3].strip())
+            if len(cells)==len(p.offers):
+                for name,cell in zip(order,cells):
+                    if re.fullmatch(MONEY,cell):p.payments.append(Payment(name,mode,int(m[1]),cell,interest=m[2]))
+            else:
+                nums=amounts(m[3])
+                if len(nums)==len(p.offers):
+                    for name,amount in zip(order,nums):p.payments.append(Payment(name,mode,int(m[1]),amount,interest=m[2]))
     if any('Roubo e Furto' in name for name in order):
         p.notes.append('Roubo e Furto: cobertura restrita a roubo, furto e incêndio total; não cobre colisão nem perda parcial nesses eventos.')
     for offer in p.offers:
@@ -339,7 +388,7 @@ def dual_options(text,p):
 
 def single_offer(text,p):
     t=norm(text);lines=t.splitlines();company=p.corretora;vals={k:v for k,v in p.values.items() if k in (*COVER_KEYS,*GLASS_KEYS,'total')}
-    name={'Azul':'Azul Compacto','Mapfre':'Auto','Aliro':'Affinity Auto','Yelum':'Auto','Zurich':'Automóvel'}[company]
+    name={'Azul':'Azul Compacto','Mapfre':'Auto','Aliro':'Affinity Auto','Yelum':'Auto','Zurich':'Automóvel','Porto Seguro':'Auto Porto Seguro'}[company]
     offer=Offer(name,vals);p.offers=[offer]
     if company in ('Aliro','Yelum'):
         for i,line in enumerate(lines):
@@ -429,25 +478,25 @@ def single_offer(text,p):
             if label in t:assign(vals,key,label)
         if 'Assistencia Casa' in t:assign(vals,'assistencia_casa','Gratuita')
         if 'RCFA - Objetos Transportados pelo Veiculo' in t:assign(vals,'objetos','Gratuita')
-    elif company=='Azul':
+    elif company in ('Azul','Porto Seguro'):
         for key,label in [('dm',r'^RCF-V Danos Materiais'),('dc',r'^RCF-V Danos Corporais'),('morais',r'^Danos Morais e Esteticos'),('appg',r'^Acidentes Pessoais Passageiros'),('defesa',r'^Custos de defesa auto')]:
             v=same_line_amount(lines,label)
             if v:assign(vals,key,money_float(v))
-        m=re.search(r'^Compreensiva[^\n]*?(\d+\.\d+%)\s+R\$\s*('+MONEY+r')',t,re.M)
+        m=re.search(r'^Compreensiva[^\n]*?(\d+\.\d+%)\s+R[$S]\s*('+MONEY+r')',t,re.M)
         if m:assign(vals,'casco',m[1]+' FIPE');assign(vals,'franquia',money_float(m[2]))
         v=same_line_amount(lines,r'Valor total')
         if v:assign(vals,'total',money_float(v))
         if 'Assistencia Gratuita - 200 Km' in t:assign(vals,'assistencia','Assistência 24h - 200 km')
         if 'Essencial 7 dias' in t:assign(vals,'reserva','Carro reserva básico - 7 dias (rede referenciada)')
         for key,label in [('parabrisa',r'Vidros \(Para-Brisa e Traseiro\)'),('traseiro',r'Vidros \(Para-Brisa e Traseiro\)'),('laterais',r'Vidros Laterais'),('farol',r'Farois/Lanternas'),('lanterna',r'Farois/Lanternas'),('retrovisor',r'Retrovisores'),('farolled',r'Farois de Xenonio'),('lanternaled',r'Lanternas de LED')]:
-            m=re.search(label+r':\s*R\$\s*('+MONEY+r')',t,re.I)
+            m=re.search(label+r':\s*R[$S]\s*('+MONEY+r')',t,re.I)
             if m:assign(vals,key,money_float(m[1]))
         headers=list(re.finditer(r'^\s*(TODAS .+|1 BOLETO / .+|1 DEBITO C\. CORRENTE / .+|BOLETO)\s*$',t,re.M))
         for i,h in enumerate(headers):
             block=t[h.end():headers[i+1].start() if i+1<len(headers) else len(t)]
             mode=compact(h[1]).replace('TODAS ','')
             if mode=='BOLETO':
-                m=re.search(r'R\$\s*('+MONEY+r')',block)
+                m=re.search(r'R[$S]\s*('+MONEY+r')',block)
                 if m:p.payments.append(Payment(name,'Boleto à vista',1,m[1],condition='5% de desconto, conforme documento'))
                 continue
             line_nums=[]
@@ -459,6 +508,16 @@ def single_offer(text,p):
             for n,amount in enumerate(line_nums,first):
                 interest='Com juros' if ('CARNE' in mode and n>=5) else 'Sem juros'
                 p.payments.append(Payment(name,mode,n,amount,interest=interest,condition='Descontos e condições específicos da modalidade'))
+        if company=='Porto Seguro':
+            if re.search(r'Azul Tradicional e Protecao Combinada',t,re.I):
+                offer.name='Azul Tradicional + Proteção Combinada'
+                for r in p.payments:r.offer=offer.name
+            for key,label in [('res_incendio',r'^Incendio, explosao e fumaca'),('res_rcf',r'^Responsabilidade civil familiar'),('res_aluguel',r'^Perda ou pagamento de aluguel')]:
+                v=same_line_amount(lines,label)
+                if v:assign(vals,key,money_float(v))
+            if re.search(r'Azul Seguros',t,re.I):p.notes.append('Documento Porto Seguro / Azul: a seguradora indicada no original é Azul Seguros.')
+            m=re.search(r'^Assistencia - (\d+ Km - Referenciada)',t,re.I|re.M)
+            if m:assign(vals,'assistencia','Assistência 24h - '+m[1])
         p.notes.append('Azul: descontos variam conforme cartão, titularidade e modalidade. Valores de parcelas reproduzidos da tabela do documento.')
 
 
@@ -468,6 +527,9 @@ def parse_proposal(text,company,pages=0,methods=None):
     if company=='Allianz':allianz(text,p)
     elif company in ('HDI','Tokio Marine'):dual_options(text,p)
     else:single_offer(text,p)
+    if company=='Tokio Marine':
+        p.offers=[o for o in p.offers if 'classico' not in norm(o.name).casefold()]
+        allowed={o.name for o in p.offers};p.payments=[r for r in p.payments if r.offer in allowed]
     # Per-option values stay in their own columns; common values never inherit one chosen option.
     for key in (*COVER_KEYS,'total'):
         p.values.pop(key,None)
@@ -483,5 +545,5 @@ def parse_proposal(text,company,pages=0,methods=None):
 
 
 def build_proposal(path,company,progress=None):
-    text,methods=read_pdf_text(path,progress)
+    text,methods=read_pdf_text(path,progress,clean_ocr=(company=='Allianz'),ocr_psm=4 if company=='Porto Seguro' else 6,ocr_dpi=324 if company=='Porto Seguro' else 300)
     return parse_proposal(text,company,len(methods),methods)

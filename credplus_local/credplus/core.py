@@ -50,6 +50,15 @@ FIELDS += [Field(key,label,'Informações adicionais','supplement') for key,labe
  ('coberturas_extra','Outras coberturas e limites'),
  ('franquias_extra','Outras franquias e condições'),
 ]]
+FIELDS += [Field(*x) for x in [
+ ('endereco','Endereço do segurado','Segurado','text',''),
+ ('bairro','Bairro do segurado','Segurado','text',''),
+ ('cidade_uf','Cidade / UF do segurado','Segurado','text',''),
+ ('cep_segurado','CEP do segurado','Segurado','id',''),
+ ('endereco_pernoite','Endereço de pernoite','Perfil','text',''),
+ ('cidade_pernoite','Cidade / UF de pernoite','Perfil','text',''),
+ ('cep_circulacao','CEP de circulação','Perfil','id',''),
+]]
 FIELD_MAP = {f.key:f for f in FIELDS}
 
 
@@ -70,10 +79,10 @@ def format_value(field, value):
             n=float(t.replace('.','').replace(',','.'))
         if not 0 <= n <= 1e12: raise ValueError(f'{field.label}: valor fora do intervalo permitido.')
         return f'{n:,.2f}'.replace(',','_').replace('.',',').replace('_','.')
-    if field.key=='cep':
+    if field.key in ('cep','cep_segurado','cep_circulacao'):
         partial=re.fullmatch(r'(\d{5})(?:\s*\(parcial(?: no documento)?\))?',text,re.I)
         if partial:return partial[1]+' (parcial no documento)'
-    if field.kind=='id' and not valid_id(field.key,text):
+    if field.kind=='id' and not valid_id('cep' if field.key in ('cep_segurado','cep_circulacao') else field.key,text):
         raise ValueError(f'{field.label}: formato ou dígitos inválidos; confira o PDF. Não adivinhe caracteres.')
     if field.kind=='date':
         import datetime
@@ -117,7 +126,7 @@ def _layout_words(page):
     return out.getvalue().decode('utf-8')
 
 
-def read_pdf_text(path,progress=None):
+def read_pdf_text(path,progress=None,clean_ocr=False,ocr_psm=6,ocr_dpi=300):
     path=Path(path)
     texts=[];methods=[]
     with fitz.open(path) as doc:
@@ -131,9 +140,15 @@ def read_pdf_text(path,progress=None):
                     exe=find_tesseract()
                     if not exe:raise RuntimeError('Este PDF é escaneado. O OCR Tesseract precisa ser incluído no pacote autorizado pela TI. Você também pode preencher os campos manualmente.')
                     img=Path(tmp)/f'page-{i}.png'
-                    scale=min(300/72,4500/max(page.rect.width,page.rect.height))
+                    scale=min(ocr_dpi/72,5000/max(page.rect.width,page.rect.height))
                     page.get_pixmap(matrix=fitz.Matrix(scale,scale),alpha=False).save(img)
-                    command=[exe,str(img),'stdout','-l','por+eng','--psm','6','-c','preserve_interword_spaces=1']
+                    if clean_ocr:
+                        # Allianz colored table bands can become solid black under global OCR thresholding.
+                        # Keep dark lettering and remove the light blue background on the temporary raster.
+                        from PIL import Image
+                        with Image.open(img) as source:
+                            source.convert('L').point(lambda n:0 if n<140 else 255).save(img)
+                    command=[exe,str(img),'stdout','-l','por+eng','--psm',str(ocr_psm),'-c','preserve_interword_spaces=1']
                     tessdata=os.environ.get('CREDPLUS_TESSDATA')
                     if not tessdata and (Path(exe).parent/'tessdata').is_dir():
                         tessdata=str(Path(exe).parent/'tessdata')

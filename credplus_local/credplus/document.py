@@ -13,7 +13,7 @@ LABELS={**{k:f.label for k,f in FIELD_MAP.items()},'defesa':'Gastos com defesa',
  'pintura':'Lataria e pintura','assistencia_casa':'Assistência casa','objetos':'Objetos transportados',
  'maquinavidros':'Máquina de vidros','retrovisorinterno':'Retrovisor interno','pelicula':'Película',
  'farolmatrix':'Farol Matrix','pequenos_reparos':'Pequenos reparos premium',
- 'parachoque':'Troca de para-choque','retrovisorled':'Retrovisor LED'}
+ 'parachoque':'Troca de para-choque','retrovisorled':'Retrovisor LED','res_incendio':'Residencial - incêndio, explosão e fumaça','res_rcf':'Residencial - responsabilidade civil familiar','res_aluguel':'Residencial - perda ou pagamento de aluguel'}
 
 def present(value):
     return value is not None and str(value).strip().casefold() not in ('','não informado','nao informado','none','null','nan')
@@ -22,7 +22,7 @@ def text(value):return html.escape(safe_text(value)).replace('\n','<br/>')
 
 def money(key,value):
     if not present(value):return ''
-    numeric=key=='defesa' or key in GLASS_KEYS or (key in FIELD_MAP and FIELD_MAP[key].kind=='money')
+    numeric=key in ('defesa','res_incendio','res_rcf','res_aluguel') or key in GLASS_KEYS or (key in FIELD_MAP and FIELD_MAP[key].kind=='money')
     return ('R$ ' if numeric and not str(value).startswith('R$') else '')+str(value)
 
 
@@ -42,7 +42,10 @@ def pdf_bytes(proposal,consultant='',phone='',logo=None):
       'section':ParagraphStyle('section',fontName='Helvetica-Bold',fontSize=10,leading=13,textColor=green),
       'th':ParagraphStyle('th',fontName='Helvetica-Bold',fontSize=7.8,leading=10,textColor=colors.white),
     }
-    def p(s,kind='body'):return Paragraph(text(s),style[kind])
+    def p(s,kind='body',highlight=False):
+        content=text(s)
+        if highlight:content='<font backColor="#FFF59D">'+content+'</font>'
+        return Paragraph(content,style[kind])
     def table(rows,widths,header=True):
         t=Table(rows,colWidths=widths,hAlign='LEFT')
         commands=[('VALIGN',(0,0),(-1,-1),'TOP'),('LEFTPADDING',(0,0),(-1,-1),6),('RIGHTPADDING',(0,0),(-1,-1),6),('TOPPADDING',(0,0),(-1,-1),5),('BOTTOMPADDING',(0,0),(-1,-1),5),('LINEBELOW',(0,0),(-1,-1),.35,colors.HexColor('#dce6e3'))]
@@ -50,7 +53,9 @@ def pdf_bytes(proposal,consultant='',phone='',logo=None):
         else:commands += [('BACKGROUND',(0,0),(-1,-1),light)]
         t.setStyle(TableStyle(commands));return t
     story=[]
-    title=[p('Proposta de Seguro Auto','title'),Spacer(1,5),p(proposal.corretora and 'Seguradora: '+proposal.corretora or 'Seguro automóvel','small')]
+    company=proposal.corretora
+    if company=='Porto Seguro' and any('Azul Seguros' in n for n in proposal.notes):company='Porto Seguro / Azul'
+    title=[p('Proposta de Seguro Auto','title'),Spacer(1,5),p(proposal.corretora and 'Seguradora: '+company or 'Seguro automóvel','small')]
     logoimage=''
     if logo and Path(logo).is_file():
         with PILImage.open(logo) as im:
@@ -58,11 +63,13 @@ def pdf_bytes(proposal,consultant='',phone='',logo=None):
     head=Table([[title,logoimage]],colWidths=[inner-150,150]);head.setStyle(TableStyle([('VALIGN',(0,0),(-1,-1),'MIDDLE'),('ALIGN',(1,0),(1,0),'RIGHT'),('LEFTPADDING',(0,0),(-1,-1),0),('RIGHTPADDING',(0,0),(-1,-1),0)]))
     story += [head,Spacer(1,18)]
     ordinary=[f for f in FIELD_MAP.values() if f.section in ('Segurado','Perfil','Veículo') and present(proposal.values.get(f.key))]
+    ordinary.sort(key=lambda f:{'Segurado':0,'Perfil':1,'Veículo':2}[f.section])
     if ordinary:
         story += [p('CLIENTE E VEÍCULO','section'),Spacer(1,7)]
         cells=[]
         for f in ordinary:
-            cells.append([p(f.label,'small'),p(proposal.values[f.key],'label')])
+            highlight=f.key in ('endereco','bairro','cidade_uf','cep_segurado','endereco_pernoite','cidade_pernoite','cep','cep_circulacao')
+            cells.append([p(f.label,'small',highlight),p(proposal.values[f.key],'label',highlight)])
         rows=[]
         for i in range(0,len(cells),3):rows.append(cells[i:i+3]+['']*(3-len(cells[i:i+3])))
         story += [table(rows,[inner/3]*3,False),Spacer(1,16)]
@@ -90,7 +97,7 @@ def pdf_bytes(proposal,consultant='',phone='',logo=None):
         elif len(set(vals))>1:continue
         if present(value):component.append((LABELS[key],money(key,value)))
     if component:
-        story += [p('FRANQUIAS DOS COMPONENTES','section'),Spacer(1,7)]
+        story += [p('FRANQUIA E ASSISTÊNCIAS','section'),Spacer(1,7)]
         rows=[]
         for i in range(0,len(component),3):
             row=[[p(label,'small'),p(value,'label')] for label,value in component[i:i+3]];rows.append(row+['']*(3-len(row)))

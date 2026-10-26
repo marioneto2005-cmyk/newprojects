@@ -119,3 +119,8 @@ Parcelas        Juros       Roubo e Furto       Básico         Ampliado        
      08         sem juros       117,98           248,53          253,18          259,61          270,45          293,81
      09         sem juros       104,87           220,92          225,05          230,77          240,40          261,16
      10         sem juros        94,38           198,83          202,55          207,69          216,36          235,04
+FRANQUIA - PARTICIPAÇÃO OBRIGATÓRIA
+Você terá participação obrigatória em caso de perda parcial indenizável:
+Franquia                                   Valor (R$)
+50% da Normal                              3.478,14
+ASSISTÊNCIA A VIDROS
