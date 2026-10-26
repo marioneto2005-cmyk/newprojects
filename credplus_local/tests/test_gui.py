@@ -25,10 +25,35 @@ class DesktopTests(unittest.TestCase):
   with patch('credplus.gui.filedialog.askopenfilename',return_value=str(new)),patch.object(a,'_choose_company',return_value='Mapfre') as choose,patch.object(a,'_import') as read:
    a._select();choose.assert_called_once_with(new);read.assert_called_once()
   self.assertEqual(a.proposal.corretora,'Mapfre');self.assertEqual(a.file,new)
- def test_cancel_popup_preserves_previous_document(self):
-  a=self.populated();before=a.proposal
+ def test_new_selection_clears_data_and_returns_to_client_before_popup(self):
+  a=self.populated();a.consultant.set('CONTATO ANTERIOR');a.phone.set('99999');a.preview_canvas.create_text(10,10,text='CLIENTE ANTERIOR');a.client_canvas.yview_moveto(1);a.tabs.select(a.payment_tab);a.update()
+  def choose(path):
+   self.assertEqual(a.tabs.select(),str(a.client_tab));self.assertFalse(a.proposal.values);self.assertFalse(a.proposal.offers);self.assertFalse(a.proposal.payments)
+   self.assertEqual(a.client_canvas.yview()[0],0);self.assertFalse(a.client_vars['nome'].get());self.assertFalse(a.consultant.get());self.assertFalse(a.phone.get());self.assertFalse(a.preview_canvas.find_all())
+   return 'Mapfre'
+  with patch('credplus.gui.filedialog.askopenfilename',return_value='new.pdf'),patch.object(a,'_choose_company',side_effect=choose),patch.object(a,'_import') as start:
+   a._select();start.assert_called_once()
+ def test_cancel_company_popup_keeps_new_file_clean(self):
+  a=self.populated();a.tabs.select(a.offer_tab);a.update()
   with patch('credplus.gui.filedialog.askopenfilename',return_value='new.pdf'),patch.object(a,'_choose_company',return_value=None):a._select()
+  self.assertFalse(a.proposal.values);self.assertFalse(a.proposal.offers);self.assertFalse(a.proposal.payments);self.assertEqual(a.file,Path('new.pdf'));self.assertEqual(a.tabs.select(),str(a.client_tab))
+ def test_select_from_preview_removes_render_and_shows_client_tab(self):
+  a=self.populated();a.tabs.select(a.preview_tab);a.update();self.assertIsNotNone(a.preview_image)
+  def choose(path):
+   self.assertEqual(a.tabs.select(),str(a.client_tab));self.assertIsNone(a.preview_image);self.assertFalse(a.preview_canvas.find_all());self.assertFalse(a.proposal.values)
+   return None
+  with patch('credplus.gui.filedialog.askopenfilename',return_value='new.pdf'),patch.object(a,'_choose_company',side_effect=choose):a._select()
+ def test_cancel_file_picker_preserves_current_document(self):
+  a=self.populated();before=a.proposal
+  with patch('credplus.gui.filedialog.askopenfilename',return_value=''):a._select()
   self.assertIs(a.proposal,before)
+ def test_import_resets_before_worker_and_preserves_logo(self):
+  a=self.populated();a.file=Path('new.pdf');a.tabs.select(a.offer_tab);a.update();marker=Path(self.tmp.name)/'marca.png';a.logo=marker
+  class Worker:
+   def __init__(self,*args,**kwargs):pass
+   def start(self):pass
+  with patch('credplus.gui.threading.Thread',Worker):a._import()
+  self.assertFalse(a.proposal.values);self.assertFalse(a.proposal.offers);self.assertFalse(a.proposal.payments);self.assertEqual(a.tabs.select(),str(a.client_tab));self.assertEqual(a.logo,marker);self.assertTrue(a.busy)
  def test_pdf_and_png_export_without_confirmation(self):
   a=self.populated()
   for kind in ['pdf','png']:

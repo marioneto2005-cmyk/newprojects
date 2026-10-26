@@ -1,11 +1,11 @@
-# Proposta Seguro Auto - Segurado v26.10.23.2
+# Proposta Seguro Auto - Segurado v26.10.26.1
 
 Aplicativo desktop para transformar um PDF de seguro em uma proposta visual, com opções de cobertura e planos de pagamento. Processamento inteiramente local; não usa serviços externos, conta Microsoft ou integração com AD. O código e o empacotador estão neste pacote. O novo executável deve ser construído em Windows.
 
 ## Usar o programa
 
 1. Abra `PropostaSeguroAuto.exe` na pasta completa distribuída. Não é necessário instalar Python, Office ou Tesseract nas estações finais: os componentes são incluídos na construção.
-2. Clique **Importar proposta PDF**. Logo após escolher o arquivo, abre a janela **Corretora** com Aliro, Allianz, Azul, HDI, Mapfre, Tokio Marine, Yelum e Zurich. Escolha a correspondente; a leitura começa automaticamente. O arquivo `ALRIO.pdf` foi identificado pelo conteúdo como Aliro.
+2. Clique **Importar proposta PDF**. Ao escolher um novo arquivo, os dados da proposta, os contatos e a prévia anteriores são limpos, mantendo a marca salva. A tela volta ao início da aba Cliente e veículo, antes de processar. Em seguida, abre a janela **Corretora** com Aliro, Allianz, Azul, HDI, Mapfre, Tokio Marine, Yelum e Zurich. Escolha a correspondente; a leitura começa automaticamente. O arquivo `ALRIO.pdf` foi identificado pelo conteúdo como Aliro.
 3. Os dados aparecem em **Cliente e veículo**, **Opções e coberturas** e **Formas de pagamento**. Todas as opções identificadas são importadas; não há seletor de opção na tela principal. Os valores podem ser editados diretamente, sem confirmação individual. Nas tabelas, use duplo clique no valor. Também é possível adicionar opções e pagamentos manualmente.
 4. No canto superior direito, clique **Alterar logomarca** e escolha PNG, JPEG ou WebP. A imagem é normalizada e salva no perfil do usuário; permanece após fechar o programa e trocar de pasta/versão. A imagem original não precisa permanecer no local. O botão **Remover** apaga a marca salva. Não há logomarca de cliente embutida no aplicativo; a marca dos exemplos é fictícia.
 5. Informe consultor e WhatsApp se desejar. Esses dados começam vazios; não são persistidos com a logomarca.
@@ -35,7 +35,7 @@ O script instala as dependências na máquina de construção, executa os testes
 
 ```text
 dist\PropostaSeguroAuto\PropostaSeguroAuto.exe
-dist\PropostaSeguroAuto-26.10.23.2-Windows.zip
+dist\PropostaSeguroAuto-26.10.26.1-Windows.zip
 ```
 
 Distribua **a pasta completa ou o ZIP**, incluindo `_internal`; não copie somente o executável. O executável anterior não se atualiza automaticamente. Construa em uma nova pasta e feche a versão antiga antes de trocar o pacote. A marca salva é reaproveitada no perfil do usuário.
@@ -56,6 +56,14 @@ A marca é armazenada em `%LOCALAPPDATA%\PropostaSeguroAuto\logo.png` no Windows
 
 Veja `exemplos/Proposta_Exemplo.pdf`, `exemplos/Proposta_Exemplo.png`, `exemplos/Tela_Interface.png` e `RELATORIO.md`. Os exemplos usam dados pessoais fictícios e valores comerciais de demonstração.
 
-## Correção 26.10.23.2
+## Histórico: correção 26.10.23.2
 
 A construção 26.10.23.1 relatada no Windows parou em dois testes de edição porque simulavam uma tecla Enter que depende do foco da janela. A edição agora usa um evento de salvamento compartilhado por Enter, Enter do teclado numérico e a automação gráfica, mantendo o salvamento ao sair do campo. Os testes de interface acionam esse evento sem depender da janela ativa. Dois testes adicionais cobrem a edição sem foco e o salvamento na perda de foco. Nenhum teste foi desativado, e o empacotador continua interrompendo a construção se houver falhas. A suite de 64 testes passou no Linux com Xvfb; a nova construção deve ser executada no Windows.
+
+## Revisão 26.10.26.1
+
+A arte PDF/PNG usa o rótulo **Seguradora** e o título **Proposta de Seguro Auto** em uma linha, com fonte de 16 pontos. A janela de seleção continua com o nome Corretora, conforme o fluxo anterior solicitado. A revisão corrige a leitura das tabelas de proponente/condutor e veículo da Tokio, incluindo placa, chassi, ano, fabricante e modelo. Se o documento identifica o condutor como o próprio segurado/proponente, ou traz os mesmos nomes completos, o CPF/CNPJ do proponente pode preencher o CPF/CNPJ do condutor vazio. Um documento de condutor já preenchido não é substituído; pessoas diferentes não recebem o mesmo documento automaticamente.
+
+O CEP da Yelum é lido na coluna de pernoite, sem confundir com a região tarifária. Se o original trouxer somente cinco dígitos, a aplicação mostra `12345 (parcial no documento)`, sem acrescentar `000`. O anexo analisado traz `35595`, sem os últimos três dígitos. É possível informar um CEP completo conhecido no campo, mantendo a marcação parcial enquanto só houver o prefixo.
+
+Ao cancelar apenas o seletor de arquivos, a proposta atual permanece. Depois de escolher um novo PDF, a proposta antiga já foi limpa mesmo que a janela de Corretora seja cancelada. Os 81 testes passaram no Linux com tela virtual; a construção Windows continua necessária para gerar o executável desta revisão.

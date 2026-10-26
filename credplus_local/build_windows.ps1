@@ -24,6 +24,6 @@ Copy-Item 'PRIVACIDADE.md' 'dist\PropostaSeguroAuto\PRIVACIDADE.md'
 Copy-Item 'LICENCAS.md' 'dist\PropostaSeguroAuto\LICENCAS.md'
 & 'dist\PropostaSeguroAuto\_internal\credplus\assets\ocr\tesseract.exe' --version
 if ($LASTEXITCODE -ne 0) { throw 'O runtime OCR empacotado não inicia. Verifique DLLs da distribuição aprovada.' }
-Compress-Archive -Path 'dist\PropostaSeguroAuto' -DestinationPath 'dist\PropostaSeguroAuto-26.10.23.2-Windows.zip' -Force
-Get-FileHash 'dist\PropostaSeguroAuto-26.10.23.2-Windows.zip' -Algorithm SHA256
+Compress-Archive -Path 'dist\PropostaSeguroAuto' -DestinationPath 'dist\PropostaSeguroAuto-26.10.26.1-Windows.zip' -Force
+Get-FileHash 'dist\PropostaSeguroAuto-26.10.26.1-Windows.zip' -Algorithm SHA256
 Write-Host 'Pacote construído. Teste em Windows com usuário padrão e solicite a liberação pela TI antes da distribuição.'

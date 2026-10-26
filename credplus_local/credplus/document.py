@@ -38,7 +38,7 @@ def pdf_bytes(proposal,consultant='',phone='',logo=None):
       'body':ParagraphStyle('body',fontName='Helvetica',fontSize=8.3,leading=11,textColor=ink),
       'label':ParagraphStyle('label',fontName='Helvetica-Bold',fontSize=8,leading=10.5,textColor=ink),
       'small':ParagraphStyle('small',fontName='Helvetica',fontSize=7.3,leading=9.5,textColor=muted),
-      'title':ParagraphStyle('title',fontName='Helvetica-Bold',fontSize=20,leading=24,textColor=green),
+      'title':ParagraphStyle('title',fontName='Helvetica-Bold',fontSize=16,leading=20,textColor=green),
       'section':ParagraphStyle('section',fontName='Helvetica-Bold',fontSize=10,leading=13,textColor=green),
       'th':ParagraphStyle('th',fontName='Helvetica-Bold',fontSize=7.8,leading=10,textColor=colors.white),
     }
@@ -50,7 +50,7 @@ def pdf_bytes(proposal,consultant='',phone='',logo=None):
         else:commands += [('BACKGROUND',(0,0),(-1,-1),light)]
         t.setStyle(TableStyle(commands));return t
     story=[]
-    title=[p('PROPOSTA DE\nSEGURO AUTO','title'),Spacer(1,5),p(proposal.corretora and 'Corretora: '+proposal.corretora or 'Seguro automóvel','small')]
+    title=[p('Proposta de Seguro Auto','title'),Spacer(1,5),p(proposal.corretora and 'Seguradora: '+proposal.corretora or 'Seguro automóvel','small')]
     logoimage=''
     if logo and Path(logo).is_file():
         with PILImage.open(logo) as im:

@@ -92,7 +92,7 @@ class App(tk.Tk):
         tree.configure(yscrollcommand=ys.set,xscrollcommand=xs.set);ys.pack(side='right',fill='y');xs.pack(side='bottom',fill='x');tree.pack(fill='both',expand=True)
         return tree
     def _build_fields(self):
-        canvas=tk.Canvas(self.client_tab,bg=WHITE,highlightthickness=0);ys=ttk.Scrollbar(self.client_tab,command=canvas.yview);ys.pack(side='right',fill='y');canvas.configure(yscrollcommand=ys.set);canvas.pack(fill='both',expand=True)
+        canvas=tk.Canvas(self.client_tab,bg=WHITE,highlightthickness=0);self.client_canvas=canvas;ys=ttk.Scrollbar(self.client_tab,command=canvas.yview);ys.pack(side='right',fill='y');canvas.configure(yscrollcommand=ys.set);canvas.pack(fill='both',expand=True)
         inside=ttk.Frame(canvas,style='Card.TFrame',padding=18);win=canvas.create_window((0,0),window=inside,anchor='nw')
         inside.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')));canvas.bind('<Configure>',lambda e:canvas.itemconfigure(win,width=e.width))
         fields=[f for f in FIELDS if f.section in ('Segurado','Perfil','Veículo') or f.kind=='supplement']
@@ -132,17 +132,36 @@ class App(tk.Tk):
         x=self.winfo_rootx()+max(0,(self.winfo_width()-popup.winfo_reqwidth())//2);y=self.winfo_rooty()+max(0,(self.winfo_height()-popup.winfo_reqheight())//2)
         popup.geometry(f'+{x}+{y}');self.wait_window(popup)
         return result[0] if result else None
+    def _clear_import(self,path,company=''):
+        # Remove active cell editors before replacing their underlying document.
+        for tree in (self.offer_tree,self.payment_tree):
+            for widget in tree.winfo_children():
+                if widget.winfo_class()=='TEntry':widget.unbind('<FocusOut>');widget.destroy()
+        self.file=path;self.proposal=Proposal(company)
+        self.consultant.set('');self.phone.set('')
+        self.preview_canvas.delete('all');self.preview_image=None
+        self.preview_canvas.configure(scrollregion=(0,0,0,0));self.preview_canvas.yview_moveto(0);self.preview_canvas.xview_moveto(0)
+        self._populate();self.tabs.select(self.client_tab);self.client_canvas.yview_moveto(0)
     def _select(self):
         if self.busy:return
         name=filedialog.askopenfilename(filetypes=[('Documento PDF','*.pdf')])
         if not name:return
-        path=Path(name);company=self._choose_company(path)
+        path=Path(name)
+        # A chosen file starts a clean document, even if the company popup is cancelled.
+        self._clear_import(path)
+        company=self._choose_company(path)
         if not company:return
-        self.file=path;self.proposal=Proposal(company);self._populate();self._import()
+        self.proposal.corretora=company;self._import()
     def _reread(self):
-        if self.file and not self.busy:self._import()
+        if not self.file or self.busy:return
+        if not self.proposal.corretora:
+            company=self._choose_company(self.file)
+            if not company:return
+            self.proposal.corretora=company
+        self._import()
     def _import(self):
-        path=self.file;company=self.proposal.corretora;self._set_busy(True)
+        path=self.file;company=self.proposal.corretora
+        self._clear_import(path,company);self._set_busy(True)
         def work():
             try:self.events.put(('result',build_proposal(path,company,lambda s:self.events.put(('progress',s)))))
             except Exception as e:self.events.put(('error',str(e)))

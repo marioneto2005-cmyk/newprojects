@@ -70,6 +70,9 @@ def format_value(field, value):
             n=float(t.replace('.','').replace(',','.'))
         if not 0 <= n <= 1e12: raise ValueError(f'{field.label}: valor fora do intervalo permitido.')
         return f'{n:,.2f}'.replace(',','_').replace('.',',').replace('_','.')
+    if field.key=='cep':
+        partial=re.fullmatch(r'(\d{5})(?:\s*\(parcial(?: no documento)?\))?',text,re.I)
+        if partial:return partial[1]+' (parcial no documento)'
     if field.kind=='id' and not valid_id(field.key,text):
         raise ValueError(f'{field.label}: formato ou dígitos inválidos; confira o PDF. Não adivinhe caracteres.')
     if field.kind=='date':

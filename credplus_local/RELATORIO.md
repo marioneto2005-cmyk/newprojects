@@ -1,4 +1,4 @@
-# Proposta Seguro Auto - Segurado v26.10.23.2
+# Proposta Seguro Auto - Segurado v26.10.26.1
 
 ## Alterações entregues
 
@@ -25,7 +25,7 @@ A Allianz apresenta diferença de um centavo no Master entre coberturas (R$2.163
 
 ## Validação
 
-64 testes automatizados passaram, sem erros, falhas ou pulos, no Linux com Xvfb. Exercitam os oito layouts comerciais, correspondência das colunas, juros, totais, cronograma desigual, ausência de mistura entre clientes, formulário e popup, geração sem conferência, edição imediata, persistência da marca, prévia e exportação PDF/PNG. A imagem PNG foi comparada pixel a pixel com a renderização a 150 dpi da página PDF. Os oito documentos reais também geraram uma página sem campos “Não informado”, e seus valores de parcelas apareceram na saída. Exemplo e interface foram inspecionados visualmente.
+81 testes automatizados passaram, sem erros, falhas ou pulos, no Linux com Xvfb. Exercitam os oito layouts comerciais, correspondência das colunas, juros, totais, cronograma desigual, ausência de mistura entre clientes, formulário e popup, geração sem conferência, edição imediata, persistência da marca, prévia e exportação PDF/PNG. A imagem PNG foi comparada pixel a pixel com a renderização a 150 dpi da página PDF. Os oito documentos reais também geraram uma página sem campos “Não informado”, e seus valores de parcelas apareceram na saída. Exemplo e interface foram inspecionados visualmente.
 
 Os testes não estabelecem precisão universal nem conferência humana integral de todos os dados pessoais. Layouts novos e OCR podem ter campos omitidos. A versão remove a revisão obrigatória conforme solicitado; não converte valores ausentes em estimativas.
 
@@ -36,3 +36,13 @@ A página digital tem largura A4 e altura variável para manter o conteúdo leg�
 ## Correção de construção na versão 26.10.23.2
 
 O log recebido do usuário para 26.10.23.1 mostrou 60 testes aprovados e duas falhas de edição de células durante a simulação de Enter no Windows. O empacotamento foi interrompido corretamente. A mesma ausência de salvamento foi reproduzida em desenvolvimento ao simular a tecla sem foco no editor. O salvamento foi associado ao evento gráfico `<<CommitCellEdit>>`, utilizado por Enter e Enter numérico e exercitado pelos testes sem exigir foco da janela do sistema operacional. A perda de foco continua salvando o campo. Foram adicionados dois cenários de regressão, totalizando 64 testes aprovados no Linux com Xvfb. Nenhum teste foi pulado ou desativado. Não houve nova compilação Windows nesta máquina; o log anterior não comprova execução desta correção no Windows.
+
+## Arte 26.10.26.1
+
+PDF e PNG identificam a companhia como Seguradora. O título Proposta de Seguro Auto usa 16 pontos em uma única linha. O seletor da interface mantém a nomenclatura anterior; esta alteração trata da arte solicitada.
+
+## Leitura e troca de documento 26.10.26.1
+
+A seleção de um novo PDF limpa dados pessoais, opções, pagamentos, contatos não persistidos e a imagem anterior, retornando ao topo de Cliente e veículo antes da leitura. A logomarca permanece. A Tokio usa uma tabela com cabeçalhos Proponente / CPF/CNPJ / Principal Condutor, com linhas quebradas de estado civil; o parser agora respeita essas colunas e as tabelas separadas de veículo. A identificação explícita de próprio segurado ou a igualdade dos nomes completos permite reutilizar CPF/CNPJ somente quando o campo do condutor estiver vazio. Casos de pessoas distintas e documento explícito diferente foram testados para evitar sobrescrita indevida.
+
+O PDF YELUM anexado imprime apenas `35595` no campo CEP de pernoite; o trecho original foi renderizado para confirmação. A saída preserva `35595 (parcial no documento)`, sem adivinhar os três dígitos restantes. CEP completo de oito dígitos também foi testado. Foram executados 81 testes sem falhas, erros ou pulos no Linux com Xvfb. Os oito PDFs foram reprocessados, preservando as 461 associações de planos de pagamento e uma página por saída; os campos de identidade/veículo da Tokio e o CEP parcial da Yelum foram verificados nos anexos reais. Não houve nova compilação Windows neste ambiente.

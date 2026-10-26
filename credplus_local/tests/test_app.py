@@ -31,7 +31,7 @@ class ValidationTests(unittest.TestCase):
   for s in ['1.234','12,3','-2,00','NaN','inf','1,00,00']:
    with self.assertRaises(ValueError):format_value(FIELD_MAP['total'],s)
  def test_invalid_ids(self):
-  for key,value in [('cpf','11111111111'),('chassi','9B3D281BMTSYGO05430'),('cep','12345'),('placa','ABC123')]:
+  for key,value in [('cpf','11111111111'),('chassi','9B3D281BMTSYGO05430'),('cep','123456'),('placa','ABC123')]:
    with self.assertRaises(ValueError):format_value(FIELD_MAP[key],value)
  def test_dates(self):
   self.assertEqual(format_value(FIELD_MAP['inicio'],'2026-10-23'),'23/10/2026')

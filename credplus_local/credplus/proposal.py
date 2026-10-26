@@ -74,6 +74,34 @@ def same_line_amount(lines,label,index=0):
             if len(nums)>index:found.append(nums[index])
     return found[0] if found and len(set(found))==1 else ''
 
+def _table_values(header,rows,columns):
+    """Read cells by their printed header positions, including wrapped rows."""
+    positions=[]
+    for key,label in columns:
+        m=re.search(label,header,re.I)
+        if m:positions.append((m.start(),key))
+    positions.sort();result={}
+    for i,(start,key) in enumerate(positions):
+        end=positions[i+1][0]-2 if i+1<len(positions) else None
+        for row in rows:
+            value=row[max(0,start-2):end].strip()
+            if value:result[key]=value;break
+    return result
+
+
+def resolve_driver_identity(values):
+    """Reuse an ID only for the same named person or an explicit own-insured indicator."""
+    insured=compact(norm(str(values.get('nome','')))).casefold()
+    driver=compact(norm(str(values.get('condutor','')))).casefold()
+    own={'proprio segurado','o proprio segurado','a propria segurada','propria segurada',
+         'proprio proponente','o proprio proponente','proponente','proprio(a) segurado(a)'}
+    if driver in own and insured:
+        values['condutor']=values['nome'];driver=insured
+    if insured and driver==insured and not values.get('cpfcond') and values.get('cpf'):
+        assign(values,'cpfcond',values['cpf'])
+    return values
+
+
 def common_fields(text,company):
     rules=json.loads((ASSETS/'regras.json').read_text(encoding='utf-8'))
     legacy_company='Yelum' if company=='Aliro' else company
@@ -132,6 +160,40 @@ def common_fields(text,company):
         }.items():
             v=read_match(t,pattern)
             if v:assign(common,key,v)
+    if company=='Tokio Marine':
+        lines=t.splitlines()
+        for i,line in enumerate(lines):
+            if re.match(r'^\s*Proponente +CPF/CNPJ',line):
+                cells=_table_values(line,lines[i+1:i+4],[('nome',r'\bProponente\b'),('cpf',r'CPF/CNPJ:?'),('condutor',r'Principal Condutor'),('_civil',r'Estado Civil')])
+                for key in ('nome','cpf','condutor'):
+                    if cells.get(key):assign(common,key,cells[key])
+            if re.match(r'^\s*Tipo Seguro +Vigencia',line):
+                cells=_table_values(line,lines[i+1:i+2],[('_tipo',r'Tipo Seguro'),('_vigencia',r'Vigencia'),('_decodificado',r'Chassi decodificado'),('placa',r'\bPlaca\b'),('chassi',r'\bChassi\b(?! +decodificado)'),('ano',r'Ano modelo')])
+                for key in ('placa','chassi','ano'):
+                    if cells.get(key):assign(common,key,cells[key])
+                m=re.fullmatch(r'(\d{2}/\d{2}/\d{4}) *- *(\d{2}/\d{2}/\d{4})',cells.get('_vigencia',''))
+                if m:assign(common,'inicio',m[1]);assign(common,'fim',m[2])
+            if re.match(r'^\s*Fabricante +Veiculo',line):
+                cells=_table_values(line,lines[i+1:i+2],[('_marca',r'Fabricante'),('modelo',r'Veiculo')])
+                model=cells.get('modelo','');brand=cells.get('_marca','')
+                if model:assign(common,'modelo',brand+' - '+model if brand and not norm(model).startswith(norm(brand)) else model)
+            if re.match(r'^\s*Combustivel +Lotacao',line):
+                cells=_table_values(line,lines[i+1:i+2],[('combustivel',r'Combustivel'),('_lotacao',r'Lotacao'),('zero',r'Zero KM'),('_fipe',r'Codigo FIPE')])
+                for key in ('combustivel','zero'):
+                    if cells.get(key):assign(common,key,cells[key])
+            if re.match(r'^\s*Tipo de utilizacao',line):
+                cells=_table_values(line,lines[i+1:i+2],[('uso',r'Tipo de utilizacao'),('_dispositivo',r'Dispositivo'),('_data',r'Data saida')])
+                if cells.get('uso'):assign(common,'uso',cells['uso'])
+            if re.match(r'^\s*CEP de pernoite\s*$',line):
+                for row in lines[i+1:i+4]:
+                    m=re.fullmatch(r'\s*(\d{5}-?\d{3}) +([Ss]im|[Nn]ao) *',row)
+                    if m:assign(common,'cep',m[1]);assign(common,'garagem',m[2])
+    if company=='Yelum':
+        lines=t.splitlines()
+        for i,line in enumerate(lines):
+            if re.search(r'CEP de Pernoite +Tipo de Franquia',line,re.I):
+                cells=_table_values(line,lines[i+1:i+2],[('_capacidade',r'Capacidade'),('_categoria',r'Categoria'),('_regiao',r'Reg\. de Tarif\.'),('cep',r'CEP de Pernoite'),('_franquia',r'Tipo de Franquia')])
+                if re.fullmatch(r'\d{5}(?:-?\d{3})?',cells.get('cep','')):assign(common,'cep',cells['cep'])
     if company=='Aliro':
         # Aliro/Liberty headers differ from Yelum: table values are immediately after labels.
         lines=t.splitlines()
@@ -150,7 +212,7 @@ def common_fields(text,company):
                 if len(parts)>=2:assign(common,'chassi',parts[0]);assign(common,'placa',parts[1])
         m=re.search(r'Das 24:00hs de (\d{2}/\d{2}/\d{4}) as 24:00hs de (\d{2}/\d{2}/\d{4})',t)
         if m:assign(common,'inicio',m[1]);assign(common,'fim',m[2])
-    return common
+    return resolve_driver_identity(common)
 
 
 def allianz(text,p):
