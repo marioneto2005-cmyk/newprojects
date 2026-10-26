@@ -1,5 +1,7 @@
 # Proposta Seguro Auto - Segurado v26.10.26.4
 
+> **Versão 26.10.26.4 em análise de segurança:** o Defender bloqueou o ZIP com `Trojan:Script/Ulthar.A!ml`. Mantenha o bloqueio e consulte [o aviso de segurança](../SECURITY_NOTICE.md) antes de executar ou distribuir esta versão.
+
 Aplicativo desktop para transformar um PDF de seguro em uma proposta visual, com opções de cobertura e planos de pagamento. Processamento inteiramente local; não usa serviços externos, conta Microsoft ou integração com AD. O código e o empacotador estão neste pacote. O novo executável deve ser construído em Windows.
 
 ## Usar o programa
