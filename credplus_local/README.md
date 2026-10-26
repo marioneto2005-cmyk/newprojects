@@ -1,10 +1,10 @@
-# Proposta Seguro Auto - Segurado v26.10.26.2
+# Proposta Seguro Auto - Segurado v26.10.26.3
 
 Aplicativo desktop para transformar um PDF de seguro em uma proposta visual, com opções de cobertura e planos de pagamento. Processamento inteiramente local; não usa serviços externos, conta Microsoft ou integração com AD. O código e o empacotador estão neste pacote. O novo executável deve ser construído em Windows.
 
 ## Usar o programa
 
-1. Abra `PropostaSeguroAuto.exe` na pasta completa distribuída. Não é necessário instalar Python, Office ou Tesseract nas estações finais: os componentes são incluídos na construção.
+1. Abra `PropostaSeguroAuto_26.10.26.3.exe` na pasta completa distribuída. Não é necessário instalar Python, Office ou Tesseract nas estações finais: os componentes são incluídos na construção.
 2. Clique **Importar proposta PDF**. Ao escolher um novo arquivo, os dados da proposta, os contatos e a prévia anteriores são limpos, mantendo a marca salva. A tela volta ao início da aba Cliente e veículo, antes de processar. Em seguida, abre a janela **Corretora** com Aliro, Allianz, Azul, HDI, Mapfre, Porto Seguro, Tokio Marine, Yelum e Zurich. Escolha a correspondente; a leitura começa automaticamente. O arquivo `ALRIO.pdf` foi identificado pelo conteúdo como Aliro.
 3. Os dados aparecem em **Cliente e veículo**, **Opções e coberturas** e **Formas de pagamento**. Todas as opções identificadas são importadas; não há seletor de opção na tela principal. Os valores podem ser editados diretamente, sem confirmação individual. Nas tabelas, use duplo clique no valor. Também é possível adicionar opções e pagamentos manualmente.
 4. No canto superior direito, clique **Alterar logomarca** e escolha PNG, JPEG ou WebP. A imagem é normalizada e salva no perfil do usuário; permanece após fechar o programa e trocar de pasta/versão. A imagem original não precisa permanecer no local. O botão **Remover** apaga a marca salva. Não há logomarca de cliente embutida no aplicativo; a marca dos exemplos é fictícia.
@@ -34,8 +34,8 @@ Abra o PowerShell na pasta extraída e execute:
 O script instala as dependências na máquina de construção, executa os testes e empacota o aplicativo. Saídas:
 
 ```text
-dist\PropostaSeguroAuto\PropostaSeguroAuto.exe
-dist\PropostaSeguroAuto-26.10.26.2-Windows.zip
+dist\PropostaSeguroAuto_26.10.26.3\PropostaSeguroAuto_26.10.26.3.exe
+dist\PropostaSeguroAuto-26.10.26.3-Windows.zip
 ```
 
 Distribua **a pasta completa ou o ZIP**, incluindo `_internal`; não copie somente o executável. O executável anterior não se atualiza automaticamente. Construa em uma nova pasta e feche a versão antiga antes de trocar o pacote. A marca salva é reaproveitada no perfil do usuário.
@@ -75,6 +75,16 @@ Ao cancelar apenas o seletor de arquivos, a proposta atual permanece. Depois de 
 - A Allianz lê a franquia na seção **Franquia - Participação Obrigatória** e reconhece modalidades de pagamento mesmo quando “Oferta (R$)” não está na mesma linha. A leitura dos cabeçalhos em PDFs escaneados remove o fundo azul claro antes do OCR. Valores ilegíveis em uma coluna não deslocam os das outras colunas. A franquia de perda parcial não é atribuída à opção Roubo e Furto, que exclui esse evento.
 - A Tokio importa somente **Auto**; Auto Clássico e seus pagamentos foram excluídos da importação automática.
 - **Porto Seguro** foi adicionada à janela de seleção. O arquivo recebido é escaneado e apresenta o produto Azul Tradicional e Proteção Combinada, co-branded Porto Seguro/Azul; essa identificação é preservada na arte. As coberturas residenciais combinadas e os pagamentos do documento são incluídos.
-- Ícone de calculadora aplicado à janela, aos diálogos e ao executável empacotado. O script usa `calculator.ico` para o recurso do executável e a aplicação identifica seu grupo na barra de tarefas do Windows.
+- Na versão 26.10.26.2 foi usado o ícone de calculadora; ele foi substituído pela folha de cotação aprovada na revisão 26.10.26.3.
 
 93 testes passaram no Linux com Xvfb. A nova compilação Windows ainda precisa ser executada. Nos PDFs digitalizados, OCR pode omitir ou confundir dígitos; a versão não inventa valores para completar campos ilegíveis. No Allianz escaneado de cinco opções foram recuperados 146 valores de parcelas de 150 posições; quatro permaneceram sem leitura válida. No Allianz de seis opções com texto, foram lidos os 180 planos.
+
+## Revisão 26.10.26.3 — ícone de folha de cotação
+
+O ícone aprovado na prévia foi convertido em PNG e ICO transparente, com tamanhos de 16, 20, 24, 32, 48, 64, 128 e 256 pixels. O desenho é uma folha de cotação com canto dobrado, cabeçalho COTAÇÃO, tabela e faixa R$. Substitui o desenho de calculadora das versões anteriores; não altera a logomarca escolhida para a arte do cliente.
+
+A janela recebe o mesmo desenho em PNG/ICO e, no Windows, os ícones nativos pequeno e grande são aplicados à janela principal. O identificador de aplicativo e o nome do executável incluem a versão, distinguindo a distribuição dos arquivos anteriores. Crie seu atalho a partir de `PropostaSeguroAuto_26.10.26.3.exe` na pasta nova. A logomarca salva no perfil continua sendo reutilizada.
+
+O empacotador verifica os recursos PE do executável após o PyInstaller: o grupo de ícones padrão deve conter todas as imagens do ICO fornecido. Se houver um ícone diferente, a construção não gera o ZIP de distribuição. Isso verifica o arquivo produzido no Windows, em vez de verificar somente se o ICO existe na pasta. Ao concluir, o script deve mostrar `Icone de folha de cotacao confirmado no executavel`.
+
+104 testes passaram no Linux com tela virtual. Os testes validam os recursos esperados, rejeição de ícones antigos/diferentes, manipulação dos ícones nativos com identificadores de 64 bits e liberação dos recursos. Não foi produzido nem executado um novo binário Windows nesta máquina; a apresentação efetiva no Explorador, janela e barra de tarefas deve ser conferida na máquina Windows após construir.

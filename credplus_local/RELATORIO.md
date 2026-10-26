@@ -1,4 +1,4 @@
-# Proposta Seguro Auto - Segurado v26.10.26.2
+# Proposta Seguro Auto - Segurado v26.10.26.3
 
 ## Alterações entregues
 
@@ -26,7 +26,7 @@ A Allianz apresenta diferença de um centavo no Master entre coberturas (R$2.163
 
 ## Validação
 
-93 testes automatizados passaram, sem erros, falhas ou pulos, no Linux com Xvfb. Exercitam os oito layouts comerciais, correspondência das colunas, juros, totais, cronograma desigual, ausência de mistura entre clientes, formulário e popup, geração sem conferência, edição imediata, persistência da marca, prévia e exportação PDF/PNG. A imagem PNG foi comparada pixel a pixel com a renderização a 150 dpi da página PDF. Os oito documentos reais também geraram uma página sem campos “Não informado”, e seus valores de parcelas apareceram na saída. Exemplo e interface foram inspecionados visualmente.
+104 testes automatizados passaram, sem erros, falhas ou pulos, no Linux com Xvfb. Exercitam os oito layouts comerciais, correspondência das colunas, juros, totais, cronograma desigual, ausência de mistura entre clientes, formulário e popup, geração sem conferência, edição imediata, persistência da marca, prévia e exportação PDF/PNG. A imagem PNG foi comparada pixel a pixel com a renderização a 150 dpi da página PDF. Os oito documentos reais também geraram uma página sem campos “Não informado”, e seus valores de parcelas apareceram na saída. Exemplo e interface foram inspecionados visualmente.
 
 Os testes não estabelecem precisão universal nem conferência humana integral de todos os dados pessoais. Layouts novos e OCR podem ter campos omitidos. A versão remove a revisão obrigatória conforme solicitado; não converte valores ausentes em estimativas.
 
@@ -57,3 +57,11 @@ A Allianz de seis opções fornecida contém franquia de 50% da Normal, R$3.478,
 Na Tokio foram mantidos somente Auto e seus 34 planos; Auto Clássico foi removido do modelo e da saída. O novo PORTO.pdf tem quatro páginas sem texto extraível; foi processado localmente por OCR com configuração específica de resolução e segmentação. Identifica o produto Azul Tradicional e Proteção Combinada e indica Azul Seguros no original, sob apresentação Porto Seguro/Azul. Importa 54 planos e as coberturas residenciais de incêndio/explosão/fumaça, responsabilidade civil familiar e aluguel, sem reutilizar dados pessoais de outro arquivo.
 
 Foi criado um ícone de calculadora em PNG e ICO com tamanhos de 16 a 256 pixels. Ele é carregado na janela e registrado no empacotador; o identificador do aplicativo para a barra de tarefas é definido antes de abrir a janela no Windows. Os arquivos e a carga do ícone na interface foram verificados, mas a compilação e a apresentação efetiva na barra de tarefas Windows não foram executadas nesta máquina Linux.
+
+## Ícone aprovado — 26.10.26.3
+
+Aplicado o desenho de folha de cotação aprovado pelo usuário: folha branca, canto dobrado, cabeçalho COTAÇÃO, tabela e total R$. Os mesmos pixels na imagem de 256 pixels são utilizados pelo PNG da janela e pelo ICO do executável, com versões menores para o Windows. O empacotador inclui o recurso e valida suas imagens no grupo padrão do executável com pefile. A comparação dos bytes do ICO com RT_ICON/RT_GROUP_ICON segue a forma de cópia de recursos do PyInstaller 6.16.0. Um grupo padrão errado é rejeitado mesmo que outro grupo contenha o ícone correto.
+
+Na execução Windows, identificador versionado é definido antes de criar a janela; são configurados os ícones Tk atual/padrão e os ícones nativos pequeno/grande por WM_SETICON na janela principal, com tipos de ponteiro de 64 bits e ciclo de vida controlado dos recursos. O arquivo passa a se chamar PropostaSeguroAuto_26.10.26.3.exe.
+
+104 testes passaram, sem pulos, no Linux com Xvfb. Incluem verificação do validador de recursos com casos de ícone antigo, imagem faltante e grupo padrão incorreto, e testes da integração nativa por simulação de API. A interface Linux carregou o PNG real. A compilação, a verificação PE de um executável real desta versão e a apresentação no Windows continuam pendentes de execução na máquina Windows do usuário. O aplicativo de propostas e a logomarca não tiveram alterações de dados nesta revisão.

@@ -9,20 +9,23 @@ from .core import FIELDS,FIELD_MAP,format_value,ASSETS
 from .proposal import Proposal,Offer,Payment,CORRETORAS,COVER_KEYS,GLASS_KEYS,build_proposal
 from .document import export_document,pdf_bytes,LABELS
 from .settings import saved_logo,save_logo,remove_logo
+from .windows_icons import set_application_id,set_window_icons,release_window_icons
 
 BG='#f3f6f8';WHITE='#ffffff';INK='#19323f';MUTED='#6c808a';GREEN='#087763';NAVY='#112e3b'
 
 class App(tk.Tk):
     def __init__(self):
+        set_application_id(__version__)
+        super().__init__();self._native_icon_handles=[]
+        self._app_icon=tk.PhotoImage(file=str(ASSETS/'quote_document.png'));self.iconphoto(True,self._app_icon)
         if os.name=='nt':
-            import ctypes
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('PropostaSeguroAuto.Segurado')
-        super().__init__();self._app_icon=tk.PhotoImage(file=str(ASSETS/'calculator.png'));self.iconphoto(True,self._app_icon)
-        if os.name=='nt':self.iconbitmap(default=str(ASSETS/'calculator.ico'))
+            self.iconbitmap(str(ASSETS/'quote_document.ico'));self.iconbitmap(default=str(ASSETS/'quote_document.ico'))
         self.title(APP_NAME);self.geometry('1380x880');self.minsize(1120,740);self.configure(bg=BG)
         self.file=None;self.proposal=Proposal('');self.values=self.proposal.values;self.busy=False;self.events=queue.Queue();self.logo=saved_logo();self.editor_popup=None
         self.consultant=tk.StringVar();self.phone=tk.StringVar();self.client_vars={};self.loading_fields=False;self.preview_image=None;self.logo_image=None;self.preview_dirty=True
-        self._style();self._build();self._refresh_logo();self.poll_id=self.after(100,self._poll);self.protocol('WM_DELETE_WINDOW',self._close)
+        self._style();self._build();self._refresh_logo()
+        self._native_icon_handles=set_window_icons(self,ASSETS/'quote_document.ico')
+        self.poll_id=self.after(100,self._poll);self.protocol('WM_DELETE_WINDOW',self._close)
     def _style(self):
         s=ttk.Style(self);s.theme_use('clam')
         s.configure('.',font=('Segoe UI',10),background=BG,foreground=INK)
@@ -313,6 +316,7 @@ class App(tk.Tk):
     def destroy(self):
         if getattr(self,'poll_id',None):self.after_cancel(self.poll_id);self.poll_id=None
         super().destroy()
+        release_window_icons(self._native_icon_handles)
     def _close(self):self.destroy()
 
 def main():App().mainloop()

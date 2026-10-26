@@ -1,8 +1,8 @@
 {
-  "versao": "26.10.26.2",
+  "versao": "26.10.26.3",
   "plataforma_validacao": "Linux x64, Python 3.12.14, Tkinter com Xvfb",
   "testes": {
-    "executados": 93,
+    "executados": 104,
     "falhas": 0,
     "erros": 0,
     "pulados": 0
@@ -398,5 +398,26 @@
     "icone_barra_tarefas_windows_validado": false,
     "allianz_ocr_celulas_pagamento_lidas": 146,
     "allianz_ocr_celulas_sem_leitura_valida": 4
+  },
+  "icone_26_10_26_3": {
+    "desenho": "folha de cotação aprovada",
+    "png_ico_mesmos_pixels_256_testados": true,
+    "tamanhos_ico": [
+      16,
+      20,
+      24,
+      32,
+      48,
+      64,
+      128,
+      256
+    ],
+    "verificacao_recursos_pe_integrada_ao_build": true,
+    "verificador_rejeita_icone_padrao_errado_testado": true,
+    "integracao_wm_seticon_simulada_testada": true,
+    "nome_executavel": "PropostaSeguroAuto_26.10.26.3.exe",
+    "novo_executavel_windows_compilado_neste_ambiente": false,
+    "barra_de_tarefas_windows_validada": false,
+    "variantes_de_idioma_do_grupo_padrao_verificadas": true
   }
 }

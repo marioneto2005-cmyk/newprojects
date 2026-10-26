@@ -80,6 +80,8 @@ class TokioAndPortoTests(unittest.TestCase):
   self.assertIn('Proteção Combinada',o.name);self.assertEqual(o.values['total'],'1.694,91');self.assertEqual(o.values['franquia'],'2.608,00');self.assertEqual(o.values['res_incendio'],'500.000,00');self.assertEqual(o.values['res_rcf'],'8.000,00');self.assertEqual(o.values['res_aluguel'],'10.000,00');self.assertEqual(len(p.payments),54)
   self.assertEqual(next(r for r in p.payments if 'AQUISICAO' in r.mode and r.installments==1).amount,'1.528,84')
   self.assertEqual(next(r for r in p.payments if r.mode=='Boleto à vista').amount,'1.610,12')
- def test_calculator_assets_are_valid_multisize_icons(self):
-  with Image.open(ASSETS/'calculator.ico') as ico:self.assertTrue({(16,16),(32,32),(256,256)}.issubset(ico.ico.sizes()))
-  with Image.open(ASSETS/'calculator.png') as png:self.assertEqual(png.size,(256,256));self.assertEqual(png.mode,'RGBA')
+ def test_quote_document_assets_are_valid_multisize_icons(self):
+  with Image.open(ASSETS/'quote_document.ico') as ico:self.assertTrue({(16,16),(32,32),(256,256)}.issubset(ico.ico.sizes()))
+  with Image.open(ASSETS/'quote_document.png') as png:
+   self.assertEqual(png.size,(256,256));self.assertEqual(png.mode,'RGBA')
+   with Image.open(ASSETS/'quote_document.ico') as ico:self.assertEqual(png.tobytes(),ico.convert('RGBA').tobytes())
