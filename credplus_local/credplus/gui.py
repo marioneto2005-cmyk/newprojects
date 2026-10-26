@@ -10,6 +10,7 @@ from .proposal import Proposal,Offer,Payment,CORRETORAS,COVER_KEYS,GLASS_KEYS,bu
 from .document import export_document,pdf_bytes,LABELS
 from .settings import saved_logo,save_logo,remove_logo
 from .windows_icons import set_application_id,set_window_icons,release_window_icons
+from .scrolling import TabWheel
 
 BG='#f3f6f8';WHITE='#ffffff';INK='#19323f';MUTED='#6c808a';GREEN='#087763';NAVY='#112e3b'
 
@@ -24,6 +25,8 @@ class App(tk.Tk):
         self.file=None;self.proposal=Proposal('');self.values=self.proposal.values;self.busy=False;self.events=queue.Queue();self.logo=saved_logo();self.editor_popup=None
         self.consultant=tk.StringVar();self.phone=tk.StringVar();self.client_vars={};self.loading_fields=False;self.preview_image=None;self.logo_image=None;self.preview_dirty=True
         self._style();self._build();self._refresh_logo()
+        self._wheel=TabWheel(self,self._before_wheel_scroll)
+        for container,view in [(self.client_tab,self.client_canvas),(self.offer_tab,self.offer_tree),(self.payment_tab,self.payment_tree),(self.preview_tab,self.preview_canvas)]:self._wheel.add(container,view)
         self._native_icon_handles=set_window_icons(self,ASSETS/'quote_document.ico')
         self.poll_id=self.after(100,self._poll);self.protocol('WM_DELETE_WINDOW',self._close)
     def _style(self):
@@ -90,7 +93,7 @@ class App(tk.Tk):
         self.payment_tree=self._tree(self.payment_tab,self.payment_columns,['Opção','Modalidade','Parcelas','Valor / parcela','Entrada','Total','Juros','Condições']);self.payment_tree.bind('<Double-1>',lambda e:self._edit_cell(self.payment_tree,e,'payment'))
         previewbar=ttk.Frame(self.preview_tab,style='Card.TFrame',padding=10);previewbar.pack(fill='x')
         ttk.Button(previewbar,text='Atualizar prévia',command=self._preview).pack(side='left')
-        self.preview_canvas=tk.Canvas(self.preview_tab,bg='#e5ecee',highlightthickness=0)
+        self.preview_canvas=tk.Canvas(self.preview_tab,bg='#e5ecee',highlightthickness=0,yscrollincrement=24)
         scroll=ttk.Scrollbar(self.preview_tab,orient='vertical',command=self.preview_canvas.yview);scroll.pack(side='right',fill='y');self.preview_canvas.configure(yscrollcommand=scroll.set);self.preview_canvas.pack(fill='both',expand=True)
     def _tree(self,parent,cols,labels):
         holder=ttk.Frame(parent,style='Card.TFrame');holder.pack(fill='both',expand=True)
@@ -100,7 +103,7 @@ class App(tk.Tk):
         tree.configure(yscrollcommand=ys.set,xscrollcommand=xs.set);ys.pack(side='right',fill='y');xs.pack(side='bottom',fill='x');tree.pack(fill='both',expand=True)
         return tree
     def _build_fields(self):
-        canvas=tk.Canvas(self.client_tab,bg=WHITE,highlightthickness=0);self.client_canvas=canvas;ys=ttk.Scrollbar(self.client_tab,command=canvas.yview);ys.pack(side='right',fill='y');canvas.configure(yscrollcommand=ys.set);canvas.pack(fill='both',expand=True)
+        canvas=tk.Canvas(self.client_tab,bg=WHITE,highlightthickness=0,yscrollincrement=24);self.client_canvas=canvas;ys=ttk.Scrollbar(self.client_tab,command=canvas.yview);ys.pack(side='right',fill='y');canvas.configure(yscrollcommand=ys.set);canvas.pack(fill='both',expand=True)
         inside=ttk.Frame(canvas,style='Card.TFrame',padding=18);win=canvas.create_window((0,0),window=inside,anchor='nw')
         inside.bind('<Configure>',lambda e:canvas.configure(scrollregion=canvas.bbox('all')));canvas.bind('<Configure>',lambda e:canvas.itemconfigure(win,width=e.width))
         fields=[f for f in FIELDS if f.section in ('Segurado','Perfil','Veículo') or f.kind=='supplement']
@@ -119,6 +122,13 @@ class App(tk.Tk):
             position+=1
             if position%2==0:row+=2
         inside.columnconfigure(0,weight=1);inside.columnconfigure(1,weight=1)
+    def _before_wheel_scroll(self,view):
+        # Save any table cell edit before moving rows underneath its editor.
+        for widget in view.winfo_children():
+            if widget.winfo_class()=='TEntry':
+                widget.event_generate('<<CommitCellEdit>>')
+                if widget.winfo_exists():return False
+        return True
     def _field_changed(self,key):
         if not self.loading_fields:self.proposal.values[key]=self.client_vars[key].get();self._dirty()
     def _dirty(self):self.preview_dirty=True
@@ -147,6 +157,7 @@ class App(tk.Tk):
         for tree in (self.offer_tree,self.payment_tree):
             for widget in tree.winfo_children():
                 if widget.winfo_class()=='TEntry':widget.unbind('<FocusOut>');widget.destroy()
+        self._wheel.reset()
         self.file=path;self.proposal=Proposal(company)
         self.consultant.set('');self.phone.set('')
         self.preview_canvas.delete('all');self.preview_image=None
@@ -215,6 +226,7 @@ class App(tk.Tk):
         box=tree.bbox(row,column)
         if not box:return
         editor=ttk.Entry(tree);editor.place(x=box[0],y=box[1],width=box[2],height=box[3]);editor.insert(0,tree.item(row,'values')[index]);editor.focus_set();editor.select_range(0,'end')
+        self._wheel.attach(editor)
         saving={'active':False}
         def save(event=None):
             if saving['active'] or not editor.winfo_exists():return
@@ -314,6 +326,7 @@ class App(tk.Tk):
             else:subprocess.Popen(['open' if sys.platform=='darwin' else 'xdg-open',str(self.file)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
         except OSError as e:messagebox.showerror('Documento original',str(e))
     def destroy(self):
+        if getattr(self,'_wheel',None):self._wheel.close()
         if getattr(self,'poll_id',None):self.after_cancel(self.poll_id);self.poll_id=None
         super().destroy()
         release_window_icons(self._native_icon_handles)

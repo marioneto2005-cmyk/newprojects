@@ -1,10 +1,10 @@
-# Proposta Seguro Auto - Segurado v26.10.26.3
+# Proposta Seguro Auto - Segurado v26.10.26.4
 
 Aplicativo desktop para transformar um PDF de seguro em uma proposta visual, com opções de cobertura e planos de pagamento. Processamento inteiramente local; não usa serviços externos, conta Microsoft ou integração com AD. O código e o empacotador estão neste pacote. O novo executável deve ser construído em Windows.
 
 ## Usar o programa
 
-1. Abra `PropostaSeguroAuto_26.10.26.3.exe` na pasta completa distribuída. Não é necessário instalar Python, Office ou Tesseract nas estações finais: os componentes são incluídos na construção.
+1. Abra `PropostaSeguroAuto_26.10.26.4.exe` na pasta completa distribuída. Não é necessário instalar Python, Office ou Tesseract nas estações finais: os componentes são incluídos na construção.
 2. Clique **Importar proposta PDF**. Ao escolher um novo arquivo, os dados da proposta, os contatos e a prévia anteriores são limpos, mantendo a marca salva. A tela volta ao início da aba Cliente e veículo, antes de processar. Em seguida, abre a janela **Corretora** com Aliro, Allianz, Azul, HDI, Mapfre, Porto Seguro, Tokio Marine, Yelum e Zurich. Escolha a correspondente; a leitura começa automaticamente. O arquivo `ALRIO.pdf` foi identificado pelo conteúdo como Aliro.
 3. Os dados aparecem em **Cliente e veículo**, **Opções e coberturas** e **Formas de pagamento**. Todas as opções identificadas são importadas; não há seletor de opção na tela principal. Os valores podem ser editados diretamente, sem confirmação individual. Nas tabelas, use duplo clique no valor. Também é possível adicionar opções e pagamentos manualmente.
 4. No canto superior direito, clique **Alterar logomarca** e escolha PNG, JPEG ou WebP. A imagem é normalizada e salva no perfil do usuário; permanece após fechar o programa e trocar de pasta/versão. A imagem original não precisa permanecer no local. O botão **Remover** apaga a marca salva. Não há logomarca de cliente embutida no aplicativo; a marca dos exemplos é fictícia.
@@ -34,8 +34,8 @@ Abra o PowerShell na pasta extraída e execute:
 O script instala as dependências na máquina de construção, executa os testes e empacota o aplicativo. Saídas:
 
 ```text
-dist\PropostaSeguroAuto_26.10.26.3\PropostaSeguroAuto_26.10.26.3.exe
-dist\PropostaSeguroAuto-26.10.26.3-Windows.zip
+dist\PropostaSeguroAuto_26.10.26.4\PropostaSeguroAuto_26.10.26.4.exe
+dist\PropostaSeguroAuto-26.10.26.4-Windows.zip
 ```
 
 Distribua **a pasta completa ou o ZIP**, incluindo `_internal`; não copie somente o executável. O executável anterior não se atualiza automaticamente. Construa em uma nova pasta e feche a versão antiga antes de trocar o pacote. A marca salva é reaproveitada no perfil do usuário.
@@ -88,3 +88,11 @@ A janela recebe o mesmo desenho em PNG/ICO e, no Windows, os ícones nativos peq
 O empacotador verifica os recursos PE do executável após o PyInstaller: o grupo de ícones padrão deve conter todas as imagens do ICO fornecido. Se houver um ícone diferente, a construção não gera o ZIP de distribuição. Isso verifica o arquivo produzido no Windows, em vez de verificar somente se o ICO existe na pasta. Ao concluir, o script deve mostrar `Icone de folha de cotacao confirmado no executavel`.
 
 104 testes passaram no Linux com tela virtual. Os testes validam os recursos esperados, rejeição de ícones antigos/diferentes, manipulação dos ícones nativos com identificadores de 64 bits e liberação dos recursos. Não foi produzido nem executado um novo binário Windows nesta máquina; a apresentação efetiva no Explorador, janela e barra de tarefas deve ser conferida na máquina Windows após construir.
+
+## Revisão 26.10.26.4 — rolagem com o mouse
+
+A roda do mouse rola a aba sob o ponteiro: Cliente e veículo, Opções e coberturas, Formas de pagamento e Prévia do documento. Funciona sobre os campos, rótulos e conteúdo das tabelas/prévia, sem exigir clique na barra de rolagem. **Shift + roda** move as tabelas na horizontal. Barras de rolagem continuam disponíveis.
+
+Os eventos são encaminhados antes do comportamento padrão dos controles para evitar rolagem dupla e alterações indesejadas no campo. Movimentos pequenos da roda são acumulados. Se uma célula da tabela estiver em edição, seu valor é salvo antes de mover as linhas; a posição de rolagem é preservada durante esse salvamento. Popups e abas ocultas não recebem a rolagem da aba atual. Uma nova importação limpa o movimento parcial da roda e volta ao início de Cliente e veículo. A folha de cotação continua como ícone e a logomarca salva é preservada.
+
+118 testes passaram, sem pulos, no Linux com Xvfb. Os novos testes exercitam movimentos reais das áreas de visualização, roda sobre campos, evento Tk da roda, ausência de rolagem dupla, entrada de alta resolução, tabelas horizontais, prévia e isolamento de janelas/abas. A compilação e a verificação com mouse físico no Windows precisam ocorrer na máquina Windows.

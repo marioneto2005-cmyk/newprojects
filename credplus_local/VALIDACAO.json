@@ -1,8 +1,8 @@
 {
-  "versao": "26.10.26.3",
+  "versao": "26.10.26.4",
   "plataforma_validacao": "Linux x64, Python 3.12.14, Tkinter com Xvfb",
   "testes": {
-    "executados": 104,
+    "executados": 118,
     "falhas": 0,
     "erros": 0,
     "pulados": 0
@@ -415,9 +415,24 @@
     "verificacao_recursos_pe_integrada_ao_build": true,
     "verificador_rejeita_icone_padrao_errado_testado": true,
     "integracao_wm_seticon_simulada_testada": true,
-    "nome_executavel": "PropostaSeguroAuto_26.10.26.3.exe",
+    "nome_executavel": "PropostaSeguroAuto_26.10.26.4.exe",
     "novo_executavel_windows_compilado_neste_ambiente": false,
     "barra_de_tarefas_windows_validada": false,
     "variantes_de_idioma_do_grupo_padrao_verificadas": true
+  },
+  "rolagem_26_10_26_4": {
+    "abas_cobertas": [
+      "Cliente e veículo",
+      "Opções e coberturas",
+      "Formas de pagamento",
+      "Prévia do documento"
+    ],
+    "mouse_sobre_campos_testado": true,
+    "evento_tk_mousewheel_testado": true,
+    "shift_horizontal_testado": true,
+    "deltas_pequenos_testados": true,
+    "editor_salvo_antes_de_rolar": true,
+    "sem_rolagem_dupla_testado": true,
+    "teste_fisico_windows_executado": false
   }
 }

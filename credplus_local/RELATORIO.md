@@ -1,4 +1,4 @@
-# Proposta Seguro Auto - Segurado v26.10.26.3
+# Proposta Seguro Auto - Segurado v26.10.26.4
 
 ## Alterações entregues
 
@@ -26,7 +26,7 @@ A Allianz apresenta diferença de um centavo no Master entre coberturas (R$2.163
 
 ## Validação
 
-104 testes automatizados passaram, sem erros, falhas ou pulos, no Linux com Xvfb. Exercitam os oito layouts comerciais, correspondência das colunas, juros, totais, cronograma desigual, ausência de mistura entre clientes, formulário e popup, geração sem conferência, edição imediata, persistência da marca, prévia e exportação PDF/PNG. A imagem PNG foi comparada pixel a pixel com a renderização a 150 dpi da página PDF. Os oito documentos reais também geraram uma página sem campos “Não informado”, e seus valores de parcelas apareceram na saída. Exemplo e interface foram inspecionados visualmente.
+118 testes automatizados passaram, sem erros, falhas ou pulos, no Linux com Xvfb. Exercitam os oito layouts comerciais, correspondência das colunas, juros, totais, cronograma desigual, ausência de mistura entre clientes, formulário e popup, geração sem conferência, edição imediata, persistência da marca, prévia e exportação PDF/PNG. A imagem PNG foi comparada pixel a pixel com a renderização a 150 dpi da página PDF. Os oito documentos reais também geraram uma página sem campos “Não informado”, e seus valores de parcelas apareceram na saída. Exemplo e interface foram inspecionados visualmente.
 
 Os testes não estabelecem precisão universal nem conferência humana integral de todos os dados pessoais. Layouts novos e OCR podem ter campos omitidos. A versão remove a revisão obrigatória conforme solicitado; não converte valores ausentes em estimativas.
 
@@ -65,3 +65,9 @@ Aplicado o desenho de folha de cotação aprovado pelo usuário: folha branca, c
 Na execução Windows, identificador versionado é definido antes de criar a janela; são configurados os ícones Tk atual/padrão e os ícones nativos pequeno/grande por WM_SETICON na janela principal, com tipos de ponteiro de 64 bits e ciclo de vida controlado dos recursos. O arquivo passa a se chamar PropostaSeguroAuto_26.10.26.3.exe.
 
 104 testes passaram, sem pulos, no Linux com Xvfb. Incluem verificação do validador de recursos com casos de ícone antigo, imagem faltante e grupo padrão incorreto, e testes da integração nativa por simulação de API. A interface Linux carregou o PNG real. A compilação, a verificação PE de um executável real desta versão e a apresentação no Windows continuam pendentes de execução na máquina Windows do usuário. O aplicativo de propostas e a logomarca não tiveram alterações de dados nesta revisão.
+
+## Rolagem nas abas — 26.10.26.4
+
+Os Canvas do formulário e da prévia tinham barras, mas não recebiam automaticamente a roda quando o ponteiro estava sobre seus controles/itens. Foi adicionado encaminhamento de eventos limitado aos descendentes das quatro abas, antes dos bindings nativos dos controles. As tabelas usam o mesmo caminho sem rolagem dupla. Não há binding global de toda a aplicação; popups ficam fora desse encaminhamento. A rolagem aceita deltas da roda Windows, movimentos pequenos, eventos de botões de roda X11 e deltas macOS. Shift seleciona o eixo horizontal.
+
+A integração salva a célula de tabela em edição antes de mover linhas, sem deixar o editor flutuando sobre outro registro. O foco e o texto dos campos do formulário são preservados ao rolar. Foram adicionados 14 cenários, totalizando 118 testes aprovados no Linux com Xvfb, sem falhas ou pulos. O evento Tk MouseWheel foi exercitado além das chamadas do roteador, verificando a mudança efetiva do viewport. O ícone, extração e exportação permanecem cobertos pela suíte existente. Não houve construção ou teste físico no Windows neste ambiente.

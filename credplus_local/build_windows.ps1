@@ -3,7 +3,7 @@
 )
 $ErrorActionPreference = 'Stop'
 Set-Location $PSScriptRoot
-$appName = 'PropostaSeguroAuto_26.10.26.3'
+$appName = 'PropostaSeguroAuto_26.10.26.4'
 $icon = Join-Path $PSScriptRoot 'credplus\assets\quote_document.ico'
 if (!(Test-Path $icon)) { throw 'Arquivo de icone da proposta ausente.' }
 if ($env:OS -ne 'Windows_NT') { throw 'Execute a construção no Windows.' }
@@ -31,6 +31,6 @@ Copy-Item 'PRIVACIDADE.md' (Join-Path $appDir 'PRIVACIDADE.md')
 Copy-Item 'LICENCAS.md' (Join-Path $appDir 'LICENCAS.md')
 & (Join-Path $appDir '_internal\credplus\assets\ocr\tesseract.exe') --version
 if ($LASTEXITCODE -ne 0) { throw 'O runtime OCR empacotado não inicia. Verifique DLLs da distribuição aprovada.' }
-Compress-Archive -Path $appDir -DestinationPath 'dist\PropostaSeguroAuto-26.10.26.3-Windows.zip' -Force
-Get-FileHash 'dist\PropostaSeguroAuto-26.10.26.3-Windows.zip' -Algorithm SHA256
+Compress-Archive -Path $appDir -DestinationPath 'dist\PropostaSeguroAuto-26.10.26.4-Windows.zip' -Force
+Get-FileHash 'dist\PropostaSeguroAuto-26.10.26.4-Windows.zip' -Algorithm SHA256
 Write-Host 'Pacote construído. Teste em Windows com usuário padrão e solicite a liberação pela TI antes da distribuição.'
